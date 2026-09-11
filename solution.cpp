@@ -4,7 +4,8 @@
 
 #include "solution.h"
 #include <fstream>
-#include "sort.h"
+#include <climits>
+#include <float.h>
 
 Solution::Solution(const char* filename) {
     std::ifstream ifs(filename);
@@ -19,7 +20,7 @@ Solution::Solution(const char* filename) {
 }
 
 void Solution::PrintResult(const char* filename) const {
-    std::ofstream ofs(filename);
+    std::ofstream ofs(filename, std::ios::app);
     if (!ofs.good()) { throw BadFile(); }
     for (auto p : hull) {
         ofs << "(" << p.x << ", " << p.y << ")" << std::endl;
@@ -35,32 +36,53 @@ const vector<point>& Solution::GetHull() const {
     return hull;
 }
 
+NaiveSolution::NaiveSolution(const char *filename):
+    Solution(filename) {}
+
+void NaiveSolution::Solve() {
+    point u = {DBL_MAX, DBL_MAX}, v;
+    for (int i = 1; i < points.size(); ++i) {
+        if (!less<point>{}(u, points[i])) { u = points[i]; }
+    }
+    hull.push_back(u); u = {0, 1};
+    while (true) {
+        double cosmin = LDBL_MAX, coscur; int hnext = -1;
+        for (int i = 0; i < points.size(); ++i) {
+            if (points[i] == hull.back()) continue;
+            v = vec(hull.back(), points[i]);
+            coscur = scalar_product_sq(u, v)/mod(v);
+            if (coscur < cosmin) { cosmin = coscur; hnext = i; };
+        }
+        u = vec(points[hnext], hull.back());
+        hull.push_back(points[hnext]);
+        if (hull.front() == hull.back()) {
+            hull.pop_back();
+            break;
+        }
+    }
+}
+
 OptimalSolution::OptimalSolution(const char* filename):
     Solution(filename) {}
 
-template <>
-struct less<point> {
-    bool operator()(const point& a, const point& b) const {
-        return a.x < b.x || (a.x == b.x && a.y < b.y);
-    }
-};
 
 void OptimalSolution::Solve() {
     auto psorted(points);
     sort(psorted.begin(), psorted.end(), less<point>());
     hull.push_back(psorted[0]), hull.push_back(psorted[1]);
-    for (size_t i = 2; i < points.size(); ++i) {
-        while (hull.size() > 1 && vector_product(p_min(*(hull.end()-1), *(hull.end()-2)),
-            p_min(*(hull.end()-1), psorted[i])) >= 0) {
+    for (int i = 2; i < points.size(); ++i) {
+        while (hull.size() > 1 && vector_product(vec(*(hull.end()-1), *(hull.end()-2)),
+            vec(*(hull.end()-1), psorted[i])) >= 0) {
             hull.pop_back();
         }
         hull.push_back(psorted[i]);
     }
-    for (size_t i = points.size()-1; i > 0; --i) {
-        while (hull.size() > 1 && vector_product(p_min(*(hull.end()-1), *(hull.end()-2)),
-            p_min(*(hull.end()-1), psorted[i])) >= 0) {
+    for (int i = points.size()-1; i >= 0; --i) {
+        while (hull.size() > 1 && vector_product(vec(*(hull.end()-1), *(hull.end()-2)),
+            vec(*(hull.end()-1), psorted[i])) >= 0) {
             hull.pop_back();
             }
         hull.push_back(psorted[i]);
     }
+    hull.pop_back();
 }

@@ -1,9 +1,16 @@
 #include "solution.h"
+#include "tester.h"
+#define out "/home/kirillr/Convex_Hull/output.txt"
 
 int main() {
-    OptimalSolution solution("/home/kirillr/Convex_Hull/input.txt");
-    solution.Solve();
-    solution.PrintResult("/home/kirillr/Convex_Hull/output.txt");
+//     NaiveSolution solution1("/home/kirillr/Convex_Hull/input.txt");
+//     OptimalSolution solution2("/home/kirillr/Convex_Hull/input.txt");
+//     solution1.Solve(); solution2.Solve();
+//     solution1.PrintResult("/home/kirillr/Convex_Hull/output_naive.txt");
+//     solution2.PrintResult("/home/kirillr/Convex_Hull/output_optimal.txt");
     //Visualiser visualiser;
+    Tester tester(10, 10, 10, 1);
+    tester.RunTests();
+    tester.PrintResults(out);
     return 0;
 }
