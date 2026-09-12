@@ -10,11 +10,9 @@
 Solution::Solution(const char* filename) {
     std::ifstream ifs(filename);
     if (!ifs.good()) { throw BadFile(); }
-    ifs >> std::ws; point p;
-    while (!ifs.eof()) {
-        ifs >> p.x >> p.y;
+    point p;
+    while (ifs >> p.x >> p.y) {
         points.push_back(p);
-        ifs >> std::ws;
     }
     ifs.close();
 }

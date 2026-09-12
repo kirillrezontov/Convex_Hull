@@ -29,13 +29,17 @@ Tester::Tester(int n, int m, double radius, char distribution) {
 }
 
 void Tester::RunTests() {
+    int passed = 0;
     for (auto test : tests) {
+        std::cout << '\r' << 100*passed/tests.size() << "%";
         test.FillFile(tfile);
         OptimalSolution Os(tfile);
         NaiveSolution Ns(tfile);
         optimal_results.push_back(test.check(Os));
         naive_results.push_back(test.check(Ns));
+        passed++;
     }
+    std::cout << '\r' << 100*passed/tests.size() << "%";
 }
 
 void Tester::PrintResults() {
@@ -76,7 +80,7 @@ Tester::test::test(int n) {
 double binpow(double x, char y) {
     double res = 1;
     while (y) {
-        if (y & 1) return res * x;
+        if (y & 1) res *= x;
         x*=x;
         y >>= 1;
     }
@@ -84,7 +88,6 @@ double binpow(double x, char y) {
 }
 
 Tester::test::test(int n, double radius, char distribution) {
-    static bool seeded = []{srand(time(nullptr)); return true;}();
     for (int i = 0; i < n; ++i) {
         double r = radius*binpow((double)rand()/RAND_MAX, distribution);
         double angle = double(rand()) / RAND_MAX * 2 * PI;
@@ -97,15 +100,23 @@ result Tester::test::check(Solution& solution) {
     auto start = std::chrono::steady_clock::now();
     solution.Solve();
     auto end = std::chrono::steady_clock::now();
-    res.time = (end - start).count();
+    res.time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
     auto hull=solution.GetHull();
 
     for (int i = 0; i < hull.size(); ++i) {
+        bool found = false;
+        for (const auto& p : points) {
+            if (hull[i] == p) {
+                found = true;
+                break;
+            }
+        }
         point prev = vec(hull[(i-1)%hull.size()], hull[i]),
         u = vec(hull[i], hull[(i+1)%hull.size()]);
         if (vector_product(prev, u) < _eps) {res.success = false; return res;}
         for (auto p : points) {
             point v = vec(hull[i], p);
+            if (p == hull[(i+1)%hull.size()]) { continue; }
             if (vector_product(u, v) < 0) {res.success = false; return res;}
         }
     }

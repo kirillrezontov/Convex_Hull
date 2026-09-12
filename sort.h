@@ -9,6 +9,7 @@
 
 #endif //PRACTICUM5_SORT_H
 
+static bool seeded = []{srand(time(nullptr));return true;}();
 
 template <typename T>
 struct less{
@@ -24,7 +25,6 @@ void swap(T& a, T& b) {
 
 template <typename T, typename Compare>
 T* partition(T* begin, T* end, Compare comp) {
-    static bool seeded = []{std::srand(time(nullptr));return true;}();
     T pivot = *(begin + std::rand()%(end - begin));
     T* left = begin, * right = end-1;
     while (true) {
