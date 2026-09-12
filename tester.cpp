@@ -21,16 +21,16 @@ Tester::Tester() {
     }
 }
 
-Tester::Tester(int n, int m, double radius, char distribution) {
-    distribution = distribution>3 ? 3 : distribution;
+Tester::Tester(int n, int m, double radius, double distribution) {
+    distribution = distribution>5 ? 5 : distribution;
     for (int i = 0; i < n; ++i) {
         tests.push_back(test(m, radius, distribution));
     }
 }
 
-void Tester::RunTests() {
+void Tester::RunTests(){
     int passed = 0;
-    for (auto test : tests) {
+    for (const auto &test : tests) {
         std::cout << '\r' << 100*passed/tests.size() << "%";
         test.FillFile(tfile);
         OptimalSolution Os(tfile);
@@ -42,21 +42,21 @@ void Tester::RunTests() {
     std::cout << '\r' << 100*passed/tests.size() << "%";
 }
 
-void Tester::PrintResults() {
+void Tester::PrintResults() const {
     using namespace std;
     cout << "Optimal solution results: \t";
     for (int i = 0; i < optimal_results.size(); ++i) {
-        cout << i << ' ' << (optimal_results[i].success?"A ": "F ")<< optimal_results[i].time << "ms \t";
+        cout << i << ' ' << (optimal_results[i].success?"A ": "F ")<< optimal_results[i].time << "us \t";
     }
     cout << endl;
     cout << "Naive solution results: \t";
     for (int i = 0; i < naive_results.size(); ++i) {
-        cout << i << ' ' << (naive_results[i].success?"A ": "F ")<< naive_results[i].time << "ms \t";
+        cout << i << ' ' << (naive_results[i].success?"A ": "F ")<< naive_results[i].time << "us \t";
     }
     cout << endl;
 }
 
-void Tester::PrintResults(const char* filename) {
+void Tester::PrintResults(const char* filename) const {
     std::ofstream cout(filename);
     cout << "Optimal solution results: \t";
     for (int i = 0; i < optimal_results.size(); ++i) {
@@ -77,25 +77,15 @@ Tester::test::test(int n) {
     }
 }
 
-double binpow(double x, char y) {
-    double res = 1;
-    while (y) {
-        if (y & 1) res *= x;
-        x*=x;
-        y >>= 1;
-    }
-    return res;
-}
-
-Tester::test::test(int n, double radius, char distribution) {
+Tester::test::test(int n, double radius, double distribution) {
     for (int i = 0; i < n; ++i) {
-        double r = radius*binpow((double)rand()/RAND_MAX, distribution);
+        double r = radius*pow(1.*rand()/RAND_MAX, distribution);
         double angle = double(rand()) / RAND_MAX * 2 * PI;
         points.push_back({r*cos(angle), r*sin(angle)});
     }
 }
 
-result Tester::test::check(Solution& solution) {
+result Tester::test::check(Solution& solution) const {
     result res;
     auto start = std::chrono::steady_clock::now();
     solution.Solve();
@@ -111,9 +101,8 @@ result Tester::test::check(Solution& solution) {
                 break;
             }
         }
-        point prev = vec(hull[(i-1)%hull.size()], hull[i]),
-        u = vec(hull[i], hull[(i+1)%hull.size()]);
-        if (vector_product(prev, u) < _eps) {res.success = false; return res;}
+        if (!found) { res.success = false; return res; }
+        point u = vec(hull[i], hull[(i+1)%hull.size()]);
         for (auto p : points) {
             point v = vec(hull[i], p);
             if (p == hull[(i+1)%hull.size()]) { continue; }
@@ -124,7 +113,7 @@ result Tester::test::check(Solution& solution) {
     return res;
 }
 
-void Tester::test::FillFile(const char* filename) {
+void Tester::test::FillFile(const char* filename) const {
     std::ofstream ofs(filename);
     if (!ofs.good()) throw BadFile();
     for (auto p: points) {

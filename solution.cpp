@@ -39,7 +39,7 @@ NaiveSolution::NaiveSolution(const char *filename):
 
 void NaiveSolution::Solve() {
     point u = {DBL_MAX, DBL_MAX}, v;
-    for (int i = 1; i < points.size(); ++i) {
+    for (int i = 0; i < points.size(); ++i) {
         if (!less<point>{}(u, points[i])) { u = points[i]; }
     }
     hull.push_back(u); u = {0, 1};
@@ -70,14 +70,14 @@ void OptimalSolution::Solve() {
     hull.push_back(psorted[0]), hull.push_back(psorted[1]);
     for (int i = 2; i < points.size(); ++i) {
         while (hull.size() > 1 && vector_product(vec(*(hull.end()-1), *(hull.end()-2)),
-            vec(*(hull.end()-1), psorted[i])) >= 0) {
+            vec(*(hull.end()-1), psorted[i])) > 0) {
             hull.pop_back();
         }
         hull.push_back(psorted[i]);
     }
     for (int i = points.size()-1; i >= 0; --i) {
         while (hull.size() > 1 && vector_product(vec(*(hull.end()-1), *(hull.end()-2)),
-            vec(*(hull.end()-1), psorted[i])) >= 0) {
+            vec(*(hull.end()-1), psorted[i])) > 0) {
             hull.pop_back();
             }
         hull.push_back(psorted[i]);
