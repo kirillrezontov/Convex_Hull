@@ -1,3 +1,5 @@
+#include <iostream>
+#include <fstream>
 #include "solution.h"
 #include "tester.h"
 #define out "/home/kirillr/Convex_Hull/output.txt"
@@ -9,7 +11,7 @@ int main() {
 //     solution1.PrintResult("/home/kirillr/Convex_Hull/output_naive.txt");
 //     solution2.PrintResult("/home/kirillr/Convex_Hull/output_optimal.txt");
     //Visualiser visualiser;
-    Tester tester(10, 10, 10, 1);
+    Tester tester(100, 100000, 1e9, 1);
     //Tester tester;
     tester.RunTests();
     tester.PrintResults(out);

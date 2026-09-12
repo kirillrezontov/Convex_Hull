@@ -7,6 +7,7 @@
 #include <cmath>
 #include <iostream>
 #include <fstream>
+#include <iomanip>
 #define PI 3.14159265359
 #define tfile "/home/kirillr/Convex_Hull/test.txt"
 Tester::Tester() {
@@ -22,17 +23,19 @@ Tester::Tester() {
 }
 
 Tester::Tester(int n, int m, double radius, double distribution) {
-    distribution = distribution>5 ? 5 : distribution;
     if (n<=0 || m <= 2) return;
     for (int i = 0; i < n; ++i) {
+        std::cout << "\rGenerating tests " << 100*i/n << "%...";
         tests.push_back(test(m, radius, distribution));
     }
+
+    std::cout << "\rGenerating tests 100%\n";
 }
 
 void Tester::RunTests(){
     int passed = 0;
     for (const auto &test : tests) {
-        std::cout << '\r' << 100*passed/tests.size() << "%";
+        std::cout << "\rRunning tests " << 100*passed/tests.size() << "%...";
         test.FillFile(tfile);
         OptimalSolution Os(tfile);
         NaiveSolution Ns(tfile);
@@ -93,7 +96,23 @@ result Tester::test::check(Solution& solution) const {
     auto end = std::chrono::steady_clock::now();
     res.time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
     auto hull=solution.GetHull();
-    if (hull.size() < 3 && points.size() >= 3) { res.success = false; return res; }
+    size_t h = hull.size();
+    if (h < 3 && points.size() >= 3) { res.success = false; return res; }
+    for (size_t i = 0; i < h; ++i) {
+        point a = hull[i], b = hull[(i+1)%h], c = hull[(i+2)%h];
+        if (vector_product(vec(a,b), vec(b,c)) < -_eps) {
+            res.success = false; return res;
+        }
+    }
+    for (int i = 0; i < hull.size(); ++i) {
+        bool found = false;
+        for (const auto& p : points) {
+            if (hull[i] == p) {
+                found = true;
+                break;
+            }
+        }
+    }
     for (int i = 0; i < hull.size(); ++i) {
         bool found = false;
         for (const auto& p : points) {
@@ -117,6 +136,7 @@ result Tester::test::check(Solution& solution) const {
 void Tester::test::FillFile(const char* filename) const {
     std::ofstream ofs(filename);
     if (!ofs.good()) throw BadFile();
+    ofs << std::setprecision(17);
     for (auto p: points) {
         ofs << p.x << ' ' << p.y << std::endl;
     }

@@ -11,5 +11,7 @@ add_executable(PractiCUM5
         sort.h
         tester.cpp
         tester.h
+        set.cpp
+        set.h
 )
 
