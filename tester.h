@@ -8,7 +8,7 @@
 #include <chrono>
 
 struct result {
-    time_t time; bool success;
+    uint64_t time; bool success;
 };
 
 class Tester {
