@@ -174,10 +174,9 @@ public:
 
 class string : public vector<char>{
 public:
-    iterator end() { return _arr+(_size-1); }
     size_t size() const { return _size-1; }
     size_t len() const { return _size-1; }
-    string(const size_t& size): vector<char>(size+1) {}
+    string(size_t size): vector<char>(size+1) {}
     string(const char* str) {
         size_t len = strlen(str);
         resize(len+1);

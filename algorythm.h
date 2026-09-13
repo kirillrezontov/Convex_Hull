@@ -8,8 +8,7 @@
 #include <cstdlib>
 #include "vector.h"
 
-
-static bool seeded = []{srand(time(nullptr));return true;}();
+inline bool seeded = []{srand(time(nullptr));return true;}();
 
 template <typename T>
 struct less{
@@ -66,7 +65,7 @@ inline string to_string(size_t i) {
         res+=(char)((i%10)+'0'); i/=10;
     }
     res+=(char)(i+'0');
-    reverse(res.begin(), res.end());
+    reverse(res.begin(), res.end()-1);
     return res;
 }
 
