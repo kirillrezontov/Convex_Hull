@@ -4,12 +4,11 @@
 
 #include "solution.h"
 #include <fstream>
-#include <climits>
-#include <float.h>
+#include <cfloat>
 
 Solution::Solution(const char* filename) {
     std::ifstream ifs(filename);
-    if (!ifs.good()) { throw BadFile(); }
+    if (!ifs.good()) { throw BadFile(filename, __func__); }
     point p;
     while (ifs >> p.x >> p.y) {
         points.push_back(p);
@@ -19,7 +18,7 @@ Solution::Solution(const char* filename) {
 
 void Solution::PrintResult(const char* filename) const {
     std::ofstream ofs(filename, std::ios::app);
-    if (!ofs.good()) { throw BadFile(); }
+    if (!ofs.good()) { throw BadFile(filename, __func__); }
     for (auto p : hull) {
         ofs << "(" << p.x << ", " << p.y << ")" << std::endl;
     }

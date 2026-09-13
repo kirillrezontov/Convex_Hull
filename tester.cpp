@@ -9,7 +9,7 @@
 #include <fstream>
 #include <iomanip>
 #define PI 3.14159265359
-#define tfile "/home/kirillr/Convex_Hull/test.txt"
+#define tfile "test.txt"
 Tester::Tester() {
     using namespace std;
     cout << "Number of tests: ";
@@ -26,16 +26,19 @@ Tester::Tester(int n, int m, double radius, double distribution) {
     if (n<=0 || m <= 2) return;
     for (int i = 0; i < n; ++i) {
         std::cout << "\rGenerating tests " << 100*i/n << "%...";
+        std::cout.flush();
         tests.push_back(test(m, radius, distribution));
     }
 
     std::cout << "\rGenerating tests 100%\n";
+    std::cout.flush();
 }
 
 void Tester::RunTests(){
     int passed = 0;
     for (const auto &test : tests) {
         std::cout << "\rRunning tests " << 100*passed/tests.size() << "%...";
+        std::cout.flush();
         test.FillFile(tfile);
         OptimalSolution Os(tfile);
         NaiveSolution Ns(tfile);
@@ -43,7 +46,8 @@ void Tester::RunTests(){
         naive_results.push_back(test.check(Ns));
         passed++;
     }
-    std::cout << '\r' << 100*passed/tests.size() << "%";
+    std::cout << "\rRunning tests " << 100*passed/tests.size() << "%";
+    std::cout.flush();
 }
 
 void Tester::PrintResults() const {
@@ -62,6 +66,7 @@ void Tester::PrintResults() const {
 
 void Tester::PrintResults(const char* filename) const {
     std::ofstream cout(filename);
+    if (!cout.is_open()) throw BadFile(filename, __func__);
     cout << "Optimal solution results: \t";
     for (int i = 0; i < optimal_results.size(); ++i) {
         cout << i << ' ' << (optimal_results[i].success?"A ": "F ")<< optimal_results[i].time << "us \t";
@@ -135,10 +140,11 @@ result Tester::test::check(Solution& solution) const {
 
 void Tester::test::FillFile(const char* filename) const {
     std::ofstream ofs(filename);
-    if (!ofs.good()) throw BadFile();
+    if (!ofs.is_open()) throw BadFile(filename, __func__);
     ofs << std::setprecision(17);
     for (auto p: points) {
         ofs << p.x << ' ' << p.y << std::endl;
     }
     ofs.close();
 }
+

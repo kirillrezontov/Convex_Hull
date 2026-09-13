@@ -3,11 +3,17 @@
 
 #include <cstdlib>
 #include <cstring>
-
+#include <iostream>
 
 class BadAlloc{};
 class BadIndex{};
-class BadFile{};
+class BadFile {
+    const char* _filename;
+    const char* _func;
+    public:
+    BadFile(const char* filename, const char* func):_filename(filename), _func(func) {}
+    void what() const { std::cerr << _filename << ": " << _func << std::endl; }
+};
 
 template <class T>
 class vector {
