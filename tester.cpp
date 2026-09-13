@@ -36,6 +36,7 @@ Tester::Tester(int n, int m, double radius, double distribution) {
 }
 
 void Tester::RunTests(){
+    if (tests.empty()) return;
     int passed = 0;
     std::ifstream tc(tcount);
     if (!tc.is_open()) throw BadFile(tcount, __func__);
@@ -43,11 +44,13 @@ void Tester::RunTests(){
     tc >> test_count;
     tc.close();
     for (const auto &test : tests) {
-        string test_name = tfile + to_string(test_count);
+        string test_name = tfile + to_string(test_count)+".txt";
         std::cout << "\rRunning tests " << 100*passed/tests.size() << "%...";
         std::cout.flush();
-        test.FillFile(test_name.c_str());
-        test_count++;
+        test.FillFile(test_name.c_str()); test_count++;
+        std::ofstream tcr(tcount);
+        if (!tcr.is_open()) throw BadFile(tcount, __func__);
+        tcr << test_count; tcr.close();
         OptimalSolution Os(test_name.c_str());
         NaiveSolution Ns(test_name.c_str());
         optimal_results.push_back(test.check(Os));
@@ -61,14 +64,19 @@ void Tester::RunTests(){
 void Tester::PrintResults() const {
     using namespace std;
     cout << "Optimal solution results: \t";
+    size_t ot=0,nt=0,os=0,ns=0;
     for (int i = 0; i < optimal_results.size(); ++i) {
         cout << i << ' ' << (optimal_results[i].success?"A ": "F ")<< optimal_results[i].time << "us \t";
+        ot+=optimal_results[i].time; os+=optimal_results[i].success;
     }
+    cout << "Optimal solution:\npassed " << os << '/' << optimal_results.size() << ", avg time " << ot/optimal_results.size() << " us\n" ;
     cout << endl;
     cout << "Naive solution results: \t";
     for (int i = 0; i < naive_results.size(); ++i) {
         cout << i << ' ' << (naive_results[i].success?"A ": "F ")<< naive_results[i].time << "us \t";
+        nt+=naive_results[i].time; ns+=naive_results[i].success;
     }
+    cout << "Naive solution:\npassed " << ns << '/' << naive_results.size() << ", avg time " << nt/naive_results.size() << " us\n" ;
     cout << endl;
 }
 
@@ -76,14 +84,19 @@ void Tester::PrintResults(const char* filename) const {
     std::ofstream cout(filename);
     if (!cout.is_open()) throw BadFile(filename, __func__);
     cout << "Optimal solution results: \t";
+    size_t ot=0,nt=0,os=0,ns=0;
     for (int i = 0; i < optimal_results.size(); ++i) {
         cout << i << ' ' << (optimal_results[i].success?"A ": "F ")<< optimal_results[i].time << "us \t";
+        ot+=optimal_results[i].time; os+=optimal_results[i].success;
     }
+    cout << "\nOptimal solution:\npassed " << os << '/' << optimal_results.size() << ", avg time " << ot/optimal_results.size() << " us\n" ;
     cout << std::endl;
     cout << "Naive solution results: \t";
     for (int i = 0; i < naive_results.size(); ++i) {
         cout << i << ' ' << (naive_results[i].success?"A ": "F ")<< naive_results[i].time << "us \t";
+        nt+=naive_results[i].time; ns+=naive_results[i].success;
     }
+    cout << "\nNaive solution:\npassed " << ns << '/' << naive_results.size() << ", avg time " << nt/naive_results.size() << " us\n" ;
     cout << std::endl;
 }
 
@@ -127,14 +140,6 @@ result Tester::test::check(Solution& solution) const {
         }
     }
     for (int i = 0; i < hull.size(); ++i) {
-        bool found = false;
-        for (const auto& p : points) {
-            if (hull[i] == p) {
-                found = true;
-                break;
-            }
-        }
-        if (!found) { res.success = false; return res; }
         point u = vec(hull[i], hull[(i+1)%hull.size()]);
         for (const auto& p: points) {
             point v = vec(hull[i], p);

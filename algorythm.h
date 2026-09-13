@@ -62,7 +62,7 @@ void reverse(T* begin, T* end) {
 
 inline string to_string(size_t i) {
     string res;
-    while (i>10) {
+    while (i>9) {
         res+=(char)((i%10)+'0'); i/=10;
     }
     res+=(char)(i+'0');
