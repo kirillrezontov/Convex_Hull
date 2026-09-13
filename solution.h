@@ -1,7 +1,7 @@
 #ifndef SOLUTION_H
 #define SOLUTION_H
 #include "vector.h"
-#include "sort.h"
+#include "algorythm.h"
 #define _eps 0.0000001
 #define abs_(x) ((x) < 0 ? -(x) : (x))
 struct point {

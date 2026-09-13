@@ -8,7 +8,7 @@ add_executable(PractiCUM5
         vector.h
         solution.cpp
         solution.h
-        sort.h
+        algorythm.h
         tester.cpp
         tester.h
         #set.cpp

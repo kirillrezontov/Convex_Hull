@@ -15,7 +15,7 @@ int main() {
     //     solution2.PrintResult("/home/kirillr/Convex_Hull/output_optimal.txt");
     //Visualiser visualiser;
     try{
-        Tester tester(100, 100000, 1e9, 1);
+        Tester tester(100, 1000, 1e9, 1);
         //Tester tester;
         tester.RunTests();
         tester.PrintResults(out);

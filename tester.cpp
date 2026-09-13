@@ -9,7 +9,9 @@
 #include <fstream>
 #include <iomanip>
 #define PI 3.14159265359
-#define tfile "test.txt"
+#define tfile "test/test_"
+#define tcount "test/test_count.txt"
+
 Tester::Tester() {
     using namespace std;
     cout << "Number of tests: ";
@@ -29,19 +31,25 @@ Tester::Tester(int n, int m, double radius, double distribution) {
         std::cout.flush();
         tests.push_back(test(m, radius, distribution));
     }
-
     std::cout << "\rGenerating tests 100%\n";
     std::cout.flush();
 }
 
 void Tester::RunTests(){
     int passed = 0;
+    std::ifstream tc(tcount);
+    if (!tc.is_open()) throw BadFile(tcount, __func__);
+    size_t test_count = 0;
+    tc >> test_count;
+    tc.close();
     for (const auto &test : tests) {
+        string test_name = tfile + to_string(test_count);
         std::cout << "\rRunning tests " << 100*passed/tests.size() << "%...";
         std::cout.flush();
-        test.FillFile(tfile);
-        OptimalSolution Os(tfile);
-        NaiveSolution Ns(tfile);
+        test.FillFile(test_name.c_str());
+        test_count++;
+        OptimalSolution Os(test_name.c_str());
+        NaiveSolution Ns(test_name.c_str());
         optimal_results.push_back(test.check(Os));
         naive_results.push_back(test.check(Ns));
         passed++;
