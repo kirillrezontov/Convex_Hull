@@ -9,7 +9,7 @@
 Solution::Solution(const char* filename) {
     std::ifstream ifs(filename);
     if (!ifs.good()) { throw BadFile(filename, __func__); }
-    point p;
+    point p{0,0};
     while (ifs >> p.x >> p.y) {
         points.push_back(p);
     }
@@ -37,9 +37,9 @@ NaiveSolution::NaiveSolution(const char *filename):
     Solution(filename) {}
 
 void NaiveSolution::Solve() {
-    point u = {DBL_MAX, DBL_MAX}, v;
-    for (int i = 0; i < points.size(); ++i) {
-        if (!less<point>{}(u, points[i])) { u = points[i]; }
+    point u {DBL_MAX, DBL_MAX}, v {0,0};
+    for (const auto& i : points) {
+        if (!less<point>{}(u, i)) { u = i; }
     }
     hull.push_back(u); u = {0, 1};
     while (true) {
@@ -74,7 +74,7 @@ void OptimalSolution::Solve() {
         }
         hull.push_back(psorted[i]);
     }
-    for (int i = points.size()-1; i >= 0; --i) {
+    for (size_t i = points.size()-1; i >= 0; --i) {
         while (hull.size() > 1 && vector_product(vec(*(hull.end()-1), *(hull.end()-2)),
             vec(*(hull.end()-1), psorted[i])) > 0) {
             hull.pop_back();

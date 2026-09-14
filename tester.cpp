@@ -116,24 +116,24 @@ Tester::test::test(int n, double radius, double distribution) {
 }
 
 result Tester::test::check(Solution& solution) const {
-    result res;
+    result res {0,false};
     auto start = std::chrono::steady_clock::now();
     solution.Solve();
     auto end = std::chrono::steady_clock::now();
     res.time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
     auto hull=solution.GetHull();
     size_t h = hull.size();
-    if (h < 3 && points.size() >= 3) { res.success = false; return res; }
+    if (h < 3 && points.size() >= 3) { return res; }
     for (size_t i = 0; i < h; ++i) {
         point a = hull[i], b = hull[(i+1)%h], c = hull[(i+2)%h];
         if (vector_product(vec(a,b), vec(b,c)) < point::epsilon) {
-            res.success = false; return res;
+            return res;
         }
     }
-    for (int i = 0; i < hull.size(); ++i) {
+    for (auto i : hull) {
         bool found = false;
         for (const auto& p : points) {
-            if (hull[i] == p) {
+            if (i == p) {
                 found = true;
                 break;
             }
@@ -144,7 +144,7 @@ result Tester::test::check(Solution& solution) const {
         for (const auto& p: points) {
             point v = vec(hull[i], p);
             if (p == hull[(i+1)%hull.size()]) { continue; }
-            if (vector_product(u, v) < 0) {res.success = false; return res;}
+            if (vector_product(u, v) < 0) { return res; }
         }
     }
     res.success = true;

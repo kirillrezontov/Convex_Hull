@@ -22,7 +22,7 @@ struct set_traits<point> {
     static constexpr size_t lookup_hnum = 9;
     static size_t hash(const point& data) {
         size_t e_data[2] {(size_t)floor(data.x/step+0.5), (size_t)floor(data.y/step+0.5)};
-        char* buf = (char*)&e_data; size_t hval = 1469598103934665603ULL;
+        auto buf = (char*)&e_data; size_t hval = 1469598103934665603ULL;
         for (size_t i = 0; i < sizeof(size_t)*2; ++i) {
             hval ^= buf[i];
             hval *= 1099511628211ULL;

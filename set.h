@@ -8,14 +8,6 @@
 #include <cmath>
 #include <filesystem>
 
-size_t hash(char* data) {
-    size_t hval = 1469598103934665603ULL;
-    for (size_t i = 0; i < sizeof(double); ++i) {
-        hval ^= data[i];
-        hval *= 1099511628211ULL;
-    }
-}
-
 template <typename T>
 struct set_traits {
     static bool equal(const T& a, const T& b) {
@@ -23,7 +15,7 @@ struct set_traits {
     }
     static constexpr size_t lookup_hnum = 1;
     static size_t hash(const T& data) {
-        char* buf = (char*)&data;
+        auto buf = (char*)&data;
         size_t hval = 1469598103934665603ULL;
         for (size_t i = 0; i < sizeof(T); ++i) {
             hval ^= buf[i];
@@ -42,12 +34,12 @@ struct set_traits<double> {
     static constexpr double epsilon = 0.0000001;
     static constexpr double step = 2*epsilon;
     static bool equal(const double& a, const double& b) {
-        return abs(a-b)<epsilon;
+        return fabs(a-b)<epsilon;
     }
     static constexpr size_t lookup_hnum = 3;
     static size_t hash(const double& data) {
         size_t e_data = floor(data/step+0.5);
-        char* buf = (char*)&e_data; size_t hval = 1469598103934665603ULL;
+        auto buf = (char*)&e_data; size_t hval = 1469598103934665603ULL;
         for (size_t i = 0; i < sizeof(double); ++i) {
             hval ^= buf[i];
             hval *= 1099511628211ULL;
@@ -82,22 +74,28 @@ class set {
     }
     public:
     class iterator {
+        friend class set;
         protected:
-        T* p; const T* end;
-        vector<T>* vp;
-        iterator(T* pos,const T* set_end, vector<T>* vpos):p(pos), end(set_end), vp(vpos){}
+        T* p, pend;
+        vector<T>* vp, vpend;
+        iterator(T* pos, T* p_end, vector<T>* vpos, vector<T> vp_end):p(pos), pend(p_end), vp(vpos), vpend(vp_end){}
         public:
         T& operator*() const {return *p;}
         T* operator->() const {return p;}
         iterator operator++() {
             auto i = *this;
-            ++p; if (p!=end) {
-                if (p == vp->end()) {++vp; p = vp->begin();}
+            ++p; if (p!=pend) {
+                if (p == vp->end()) {
+                    while (vp!=vpend && vp->empty()) {
+                        ++vp;
+                    }
+                    p = vp->begin();
+                }
             }
             return i;
         }
         iterator& operator++(int) {
-            ++p; if (p!=end) {
+            ++p; if (p!=pend) {
                 if (p == vp->end()) {++vp; p = vp->begin();}
             }
             return *this;
@@ -105,13 +103,13 @@ class set {
         iterator operator--() {
             auto i = *this;
             if (p==vp->begin()) {
-                --vp; p=vp->end-1;
+                --vp; p=vp->end()-1;
             }
             return i;
         }
         iterator& operator--(int) {
             if (p==vp->begin()) {
-                --vp; p=vp->end-1;
+                --vp; p=vp->end()-1;
             }
             return *this;
         }
@@ -121,21 +119,67 @@ class set {
         bool operator!=(const T* ptr) const {
             return p != ptr;
         }
-        bool operator==(const iterator& it) const {
-            return p == it.p;
-        }
-        bool operator!=(const iterator& it) const {
-            return p != it.p;
+        bool operator!=(const iterator iter) const {
+            return p != iter.p;
         }
     };
-    iterator begin() const {return {buckets.front().begin(), buckets.back().end(), buckets.begin()};}
-    iterator end() const {return {buckets.back().end(), buckets.back().end(), buckets.end()-1};}
-    size_t size() const { return _size; } // NOLINT(*-use-nodiscard)
+    class const_iterator {
+        friend class set;
+    protected:
+        const T* p; const T* end;
+        const vector<T>* vp;
+        const_iterator(const T* pos,const T* set_end,const vector<T>* vpos):p(pos), end(set_end), vp(vpos){}
+    public:
+        const T& operator*() const {return *p;}
+        const T* operator->() const {return p;}
+        const_iterator operator++() {
+            auto i = *this;
+            ++p; if (p!=end) {
+                if (p == vp->end()) {++vp; p = vp->begin();}
+            }
+            return i;
+        }
+        const_iterator& operator++(int) {
+            ++p; if (p!=end) {
+                if (p == vp->end()) {++vp; p = vp->begin();}
+            }
+            return *this;
+        }
+        const_iterator operator--() {
+            auto i = *this;
+            if (p==vp->begin()) {
+                --vp; p=vp->end()-1;
+            }
+            return i;
+        }
+        const_iterator& operator--(int) {
+            if (p==vp->begin()) {
+                --vp; p=vp->end()-1;
+            }
+            return *this;
+        }
+        bool operator==(const T* ptr) const {
+            return p == ptr;
+        }
+        bool operator!=(const T* ptr) const {
+            return p != ptr;
+        }
+        bool operator!=(const const_iterator iter) const {
+            return p != iter.p;
+        }
+    };
+
+    iterator begin() {return {buckets.front().begin(), buckets.back().end(), buckets.begin()};}
+    iterator end() {return {buckets.back().end(), buckets.back().end(), buckets.end()-1};}
+    const_iterator begin() const { return {buckets.front().begin(), buckets.back().end(), buckets.begin()};}
+    const_iterator end() const {return {buckets.back().end(), buckets.back().end(), buckets.end()-1};}
+    size_t size() const { return _size; }
     size_t bucket_capacity() const { return _capacity; }
     bool empty() const { return _size == 0; }
-    set(size_t bucket_cap = 16): _size(0) {
+    set(size_t bucket_cap = 16): _size(0), _capacity(0) {
         bucket_cap = bucket_cap < 8 ? 8 : bucket_cap;
         size_t cap = 1; while (cap < bucket_cap) cap <<= 1;
+        _capacity = cap;
         buckets = vector<vector<T>>(cap);
     }
     set(set const& other) {
@@ -143,10 +187,7 @@ class set {
         _capacity = other._capacity;
         _size = other._size;
     }
-    set(set&& other) {
-        buckets(move(other.buckets));
-        _capacity = other._capacity;
-        _size = other._size;
+    set(set&& other) noexcept : _size{other._size}, _capacity{other._capacity}, buckets{move(other.buckets)} {
         other._size = 0;
     }
     set& operator = (set const& other) {
@@ -154,12 +195,14 @@ class set {
         buckets = other.buckets;
         _capacity = other._capacity;
         _size = other._size;
+        return *this;
     }
-    set& operator = (set&& other) {
+    set& operator = (set&& other) noexcept {
         if (this == &other) { return *this; }
         buckets = move(other.buckets);
         _capacity = other._capacity;
         _size = other._size;
+        return *this;
     }
     iterator find(T const& data) const {
         size_t hvals[set_traits<T>::lookup_hnum];
@@ -189,6 +232,7 @@ class set {
         size_t hval = set_traits<T>::hash(data);
         buckets[hval%_capacity].push_back(data);
         _size++;
+        return true;
     }
     bool insert(T&& data) {
         if (contains(data)) { return false; }
@@ -196,11 +240,12 @@ class set {
         size_t hval = set_traits<T>::hash(data);
         buckets[hval%_capacity].push_back(move(data));
         _size++;
+        return true;
     }
     bool remove(T const& data) {
         auto iter = find(data);
         if (iter != end()) {
-            iter.vp->erase(iter.p);
+            iter.vp->remove(iter.p);
             _size--;
             return true;
         }

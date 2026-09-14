@@ -196,7 +196,7 @@ public:
         resize(len+1);
         strcpy(_arr, str);
     }
-    string(const string& str):vector<char>(str) {}
+    string(const string& str) = default;
     string(string&& str) noexcept :vector<char>(move(str)) {}
     string():vector<char>(1) {
         _arr[0]='\0';
