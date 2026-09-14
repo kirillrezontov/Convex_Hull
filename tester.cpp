@@ -138,6 +138,7 @@ result Tester::test::check(Solution& solution) const {
                 break;
             }
         }
+        if (!found) { return res; }
     }
     for (int i = 0; i < hull.size(); ++i) {
         point u = vec(hull[i], hull[(i+1)%hull.size()]);
@@ -155,7 +156,7 @@ void Tester::test::FillFile(const char* filename) const {
     std::ofstream ofs(filename);
     if (!ofs.is_open()) throw BadFile(filename, __func__);
     ofs << std::setprecision(17);
-    for (auto p: points) {
+    for (const auto &p: points) {
         ofs << p.x << ' ' << p.y << std::endl;
     }
     ofs.close();

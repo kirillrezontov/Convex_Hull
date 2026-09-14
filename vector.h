@@ -88,7 +88,7 @@ public:
 
     void reserve(size_t capacity) {
         if (_capacity >= capacity) { return; }
-        size_t new_capacity = (_capacity)?_capacity:8;
+        size_t new_capacity = (_capacity)?_capacity:4;
         while (capacity > new_capacity) { new_capacity<<=1; }
         T* tmp = (T*)malloc(new_capacity * sizeof(T));
         if (!tmp) throw BadAlloc(capacity, __func__);
