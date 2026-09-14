@@ -38,7 +38,7 @@ struct set_traits<double> {
     }
     static constexpr size_t lookup_hnum = 3;
     static size_t hash(const double& data) {
-        size_t e_data = floor(data/step+0.5);
+        int64_t e_data = floor(data/step+0.5);
         auto buf = (char*)&e_data; size_t hval = 1469598103934665603ULL;
         for (size_t i = 0; i < sizeof(double); ++i) {
             hval ^= buf[i];
@@ -188,9 +188,23 @@ class set {
         }
     };
 
-    iterator begin() {return {buckets.front().begin(), buckets.back().end(), buckets.begin(), buckets.end()};}
+    iterator begin() {
+        size_t i = 0; while (i < _size) {
+            if (!buckets[i].empty()) {
+                return {buckets[i].begin(), buckets.back().end(), buckets.begin(), buckets.end()};
+            }
+        }
+        return end();
+    }
     iterator end() {return {buckets.back().end(), buckets.back().end(), buckets.end()-1, buckets.end()};}
-    const_iterator begin() const { return {buckets.front().begin(), buckets.back().end(), buckets.begin(), buckets.end()};}
+    const_iterator begin() const {
+        size_t i = 0; while (i < _size) {
+            if (!buckets[i].empty()) {
+                return {buckets[i].begin(), buckets.back().end(), buckets.begin(), buckets.end()};
+            }
+        }
+        return end();
+    }
     const_iterator end() const {return {buckets.back().end(), buckets.back().end(), buckets.end()-1, buckets.end()};}
     size_t size() const { return _size; }
     size_t bucket_capacity() const { return _capacity; }
@@ -201,11 +215,7 @@ class set {
         _capacity = cap;
         buckets = vector<vector<T>>(cap);
     }
-    set(set const& other) {
-        buckets(other.buckets);
-        _capacity = other._capacity;
-        _size = other._size;
-    }
+    set(set const& other):  _size(other.size),_capacity(other._capacity), buckets(other.buckets) {}
     set(set&& other) noexcept : _size{other._size}, _capacity{other._capacity}, buckets{move(other.buckets)} {
         other._size = 0;
     }
@@ -263,7 +273,7 @@ class set {
     }
     bool insert(T const& data) {
         if (contains(data)) { return false; }
-        if (_size >= _capacity) {rehash(_capacity * 2); }
+        if (2*_size >= _capacity) {rehash(_capacity * 2); }
         size_t hval = set_traits<T>::hash(data);
         buckets[hval%_capacity].push_back(data);
         _size++;
@@ -271,7 +281,7 @@ class set {
     }
     bool insert(T&& data) {
         if (contains(data)) { return false; }
-        if (_size >= _capacity) {rehash(_capacity * 2); }
+        if (2*_size >= _capacity) {rehash(_capacity * 2); }
         size_t hval = set_traits<T>::hash(data);
         buckets[hval%_capacity].push_back(move(data));
         _size++;

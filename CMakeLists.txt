@@ -3,7 +3,7 @@ project(Convex_Hull)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(PractiCUM5
+add_executable(Convex_Hull
         main.cpp
         vector.h
         solution.cpp

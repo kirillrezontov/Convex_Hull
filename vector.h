@@ -147,14 +147,14 @@ public:
     void remove(iterator& pos) {
         if (pos >= _arr+_size || pos < _arr) return;
         pos->~T();
-        for (iterator i = pos; i < _arr+_size-1; ) {*i = move(*(i+1));}
+        for (iterator i = pos; i < _arr+_size-1; ++i) {*i = move(*(i+1));}
         _size--;
     }
 
     void remove(size_t pos) {
         if (pos >= _size || pos < 0) return;
         _arr[pos].~T();
-        for (iterator i = _arr+pos; i < _arr+_size-1; ) {*i = move(*(i+1));}
+        for (iterator i = _arr+pos; i < _arr+_size-1; ++i) {*i = move(*(i+1));}
         _size--;
     }
 
