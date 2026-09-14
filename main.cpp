@@ -14,20 +14,9 @@ int main() {
     //     solution1.PrintResult("/home/kirillr/Convex_Hull/output_naive.txt");
     //     solution2.PrintResult("/home/kirillr/Convex_Hull/output_optimal.txt");
     //Visualiser visualiser;
-    try{
-        Tester tester(100, 100000, 1e9, 1);
-        //Tester tester;
-        tester.RunTests();
-        tester.PrintResults(out);
-    }
-    catch (BadFile& e) {
-        e.what();
-    }
-    catch (BadIndex& e) {
-        e.what();
-    }
-    catch (BadAlloc& e) {
-        e.what();
-    }
+    Tester tester(100, 100, 1e9, 1);
+    //Tester tester;
+    tester.RunTests();
+    tester.PrintResults(out);
     return 0;
 }
