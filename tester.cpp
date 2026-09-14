@@ -103,7 +103,7 @@ void Tester::PrintResults(const char* filename) const {
 Tester::test::test(int n) {
     for (int i = 0; i < n; ++i) {
         double x, y; std::cin >> x >> y;
-        points.push_back({x, y});
+        points.insert(point{x,y});
     }
 }
 
@@ -126,7 +126,7 @@ result Tester::test::check(Solution& solution) const {
     if (h < 3 && points.size() >= 3) { res.success = false; return res; }
     for (size_t i = 0; i < h; ++i) {
         point a = hull[i], b = hull[(i+1)%h], c = hull[(i+2)%h];
-        if (vector_product(vec(a,b), vec(b,c)) < -_eps) {
+        if (vector_product(vec(a,b), vec(b,c)) < point::epsilon) {
             res.success = false; return res;
         }
     }

@@ -7,7 +7,7 @@ struct point {
     double x, y;
     static constexpr double epsilon = 0.0000001;
     bool operator==(const point & other) const {
-        return abs(x-other.x) < epsilon && abs(y - other.y) < epsilon;
+        return fabs(x-other.x) < epsilon && fabs(y - other.y) < epsilon;
     }
 };
 

@@ -122,9 +122,9 @@ public:
         return _arr[i];
     }
 
-    T& front() { return _arr[0]; }
+    T& front() const { return _arr[0]; }
 
-    T& back() { return _arr[_size-1]; }
+    T& back() const { return _arr[_size-1]; }
 
     void push_back(const T& x) {
         if (_size == _capacity) { reserve((_capacity)?_capacity*2:8); }

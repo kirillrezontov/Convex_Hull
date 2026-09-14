@@ -74,7 +74,7 @@ class set {
         buckets = vector<vector<T>>(cap);
         for (size_t i = 0; i < old.size(); ++i) {
             for (auto e : old[i]) {
-                size_t h = hash(e);
+                size_t h = set_traits<T>::hash(e);
                 buckets[h%cap].push_back(e);
             }
         }
@@ -82,11 +82,10 @@ class set {
     }
     public:
     class iterator {
-        friend class set;
         protected:
         T* p; const T* end;
         vector<T>* vp;
-        iterator(T* pos, vector<T>* vpos):p(pos), vp(vpos) {}
+        iterator(T* pos,const T* set_end, vector<T>* vpos):p(pos), end(set_end), vp(vpos){}
         public:
         T& operator*() const {return *p;}
         T* operator->() const {return p;}
@@ -129,10 +128,9 @@ class set {
             return p != it.p;
         }
     };
-
-    const iterator begin() const { return {buckets.front().begin(), buckets.begin()}; }
-    const iterator end() const { return {buckets.back.end(), buckets.end()-1}; }
-    size_t size() const { return _size; }
+    iterator begin() const {return {buckets.front().begin(), buckets.back().end(), buckets.begin()};}
+    iterator end() const {return {buckets.back().end(), buckets.back().end(), buckets.end()-1};}
+    size_t size() const { return _size; } // NOLINT(*-use-nodiscard)
     size_t bucket_capacity() const { return _capacity; }
     bool empty() const { return _size == 0; }
     set(size_t bucket_cap = 16): _size(0) {
@@ -188,14 +186,14 @@ class set {
     bool insert(T const& data) {
         if (contains(data)) { return false; }
         if (_size >= _capacity) {rehash(_capacity * 2); }
-        size_t hval = hash(data);
+        size_t hval = set_traits<T>::hash(data);
         buckets[hval%_capacity].push_back(data);
         _size++;
     }
     bool insert(T&& data) {
         if (contains(data)) { return false; }
         if (_size >= _capacity) {rehash(_capacity * 2); }
-        size_t hval = hash(data);
+        size_t hval = set_traits<T>::hash(data);
         buckets[hval%_capacity].push_back(move(data));
         _size++;
     }

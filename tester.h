@@ -17,7 +17,7 @@ struct set_traits<point> {
     static constexpr double epsilon = point::epsilon;
     static constexpr double step = 2*epsilon;
     static bool equal(const point& a, const point& b) {
-        return abs(a.x-b.x)<epsilon && abs(a.y-b.y)<epsilon;
+        return fabs(a.x-b.x)<epsilon && fabs(a.y-b.y)<epsilon;
     }
     static constexpr size_t lookup_hnum = 9;
     static size_t hash(const point& data) {
