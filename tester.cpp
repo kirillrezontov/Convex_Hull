@@ -126,21 +126,12 @@ result Tester::test::check(Solution& solution) const {
     if (h < 3 && points.size() >= 3) { return res; }
     for (size_t i = 0; i < h; ++i) {
         point a = hull[i], b = hull[(i+1)%h], c = hull[(i+2)%h];
-        if (vector_product(vec(a,b), vec(b,c)) < point::epsilon) {
+        if (vector_product(vec(a,b), vec(b,c)) < -point::epsilon) {
             return res;
         }
     }
-    for (auto i : hull) {
-        bool found = false;
-        for (const auto& p : points) {
-            if (i == p) {
-                found = true;
-                break;
-            }
-        }
-        if (!found) { return res; }
-    }
     for (int i = 0; i < hull.size(); ++i) {
+        if (!points.contains(hull[i])) { return res; }
         point u = vec(hull[i], hull[(i+1)%hull.size()]);
         for (const auto& p: points) {
             point v = vec(hull[i], p);
