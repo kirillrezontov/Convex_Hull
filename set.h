@@ -39,8 +39,8 @@ struct set_traits {
 
 template<>
 struct set_traits<double> {
-    static double epsilon = 0.0000001;
-    static double step = 2*epsilon;
+    static constexpr double epsilon = 0.0000001;
+    static constexpr double step = 2*epsilon;
     static bool equal(const double& a, const double& b) {
         return abs(a-b)<epsilon;
     }
@@ -55,7 +55,6 @@ struct set_traits<double> {
         return hval;
     }
     static size_t lookup(const double& data, size_t* out) {
-        double edata = floor(data/step+0.5);
         out[0] = hash(data-epsilon);
         out[1] = hash(data);
         out[2] = hash(data+epsilon);

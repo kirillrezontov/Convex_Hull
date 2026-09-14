@@ -11,6 +11,6 @@ add_executable(PractiCUM5
         algorythm.h
         tester.cpp
         tester.h
-        #set.h
+        set.h
 )
 

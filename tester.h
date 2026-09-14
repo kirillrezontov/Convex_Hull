@@ -5,10 +5,40 @@
 #ifndef CONVEX_HULL_TESTER_H
 #define CONVEX_HULL_TESTER_H
 #include "solution.h"
+#include "set.h"
 #include <chrono>
 
 struct result {
     uint64_t time; bool success;
+};
+
+
+template<>
+struct set_traits<point> {
+    static constexpr double epsilon = 0.0000001;
+    static constexpr double step = 2*epsilon;
+    static bool equal(const point& a, const point& b) {
+        return abs(a.x-b.x)<epsilon && abs(a.y-b.y)<epsilon;
+    }
+    static constexpr size_t lookup_hnum = 9;
+    static size_t hash(const point& data) {
+        size_t e_data[2] {(size_t)floor(data.x/step+0.5), (size_t)floor(data.y/step+0.5)};
+        char* buf = (char*)&e_data; size_t hval = 1469598103934665603ULL;
+        for (size_t i = 0; i < sizeof(size_t)*2; ++i) {
+            hval ^= buf[i];
+            hval *= 1099511628211ULL;
+        }
+        return hval;
+    }
+    static size_t lookup(const point& data, size_t* out) {
+        int k = 0;
+        for (int i = -1; i <= 1; ++i) {
+            for (int j = -1; j <= 1; ++j) {
+                out[k++] = hash({data.x+i*step, data.y+j*step});
+            }
+        }
+        return 9;
+    }
 };
 
 class Tester {
