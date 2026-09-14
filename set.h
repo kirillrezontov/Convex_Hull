@@ -76,9 +76,9 @@ class set {
     class iterator {
         friend class set;
         protected:
-        T* p, pend;
-        vector<T>* vp, vpend;
-        iterator(T* pos, T* p_end, vector<T>* vpos, vector<T> vp_end):p(pos), pend(p_end), vp(vpos), vpend(vp_end){}
+        T* p, *pend;
+        vector<T>* vp, *vpend;
+        iterator(T* pos, T* p_end, vector<T>* vpos, vector<T> *vp_end):p(pos), pend(p_end), vp(vpos), vpend(vp_end){}
         public:
         T& operator*() const {return *p;}
         T* operator->() const {return p;}
@@ -89,14 +89,21 @@ class set {
                     while (vp!=vpend && vp->empty()) {
                         ++vp;
                     }
-                    p = vp->begin();
+                    if (vp == vpend) p = pend;
+                    else p = vp->begin();
                 }
             }
             return i;
         }
         iterator& operator++(int) {
             ++p; if (p!=pend) {
-                if (p == vp->end()) {++vp; p = vp->begin();}
+                if (p == vp->end()) {
+                    while (vp!=vpend && vp->empty()) {
+                        ++vp;
+                    }
+                    if (vp == vpend) p = pend;
+                    else p = vp->begin();
+                }
             }
             return *this;
         }
@@ -126,22 +133,34 @@ class set {
     class const_iterator {
         friend class set;
     protected:
-        const T* p; const T* end;
-        const vector<T>* vp;
-        const_iterator(const T* pos,const T* set_end,const vector<T>* vpos):p(pos), end(set_end), vp(vpos){}
+        const T* p, * pend;
+        const vector<T>* vp, *vpend;
+        const_iterator(const T* pos,const T* p_end,const vector<T>* vpos, const vector<T>* vp_end):p(pos), pend(p_end), vp(vpos), vpend(vp_end){}
     public:
         const T& operator*() const {return *p;}
         const T* operator->() const {return p;}
         const_iterator operator++() {
             auto i = *this;
-            ++p; if (p!=end) {
-                if (p == vp->end()) {++vp; p = vp->begin();}
+            ++p; if (p!=pend) {
+                if (p == vp->end()) {
+                    while (vp!=vpend && vp->empty()) {
+                        ++vp;
+                    }
+                    if (vp == vpend) p = pend;
+                    else p = vp->begin();
+                }
             }
             return i;
         }
         const_iterator& operator++(int) {
-            ++p; if (p!=end) {
-                if (p == vp->end()) {++vp; p = vp->begin();}
+            ++p; if (p!=pend) {
+                if (p == vp->end()) {
+                    while (vp!=vpend && vp->empty()) {
+                        ++vp;
+                    }
+                    if (vp == vpend) p = pend;
+                    else p = vp->begin();
+                }
             }
             return *this;
         }
@@ -169,10 +188,10 @@ class set {
         }
     };
 
-    iterator begin() {return {buckets.front().begin(), buckets.back().end(), buckets.begin()};}
-    iterator end() {return {buckets.back().end(), buckets.back().end(), buckets.end()-1};}
-    const_iterator begin() const { return {buckets.front().begin(), buckets.back().end(), buckets.begin()};}
-    const_iterator end() const {return {buckets.back().end(), buckets.back().end(), buckets.end()-1};}
+    iterator begin() {return {buckets.front().begin(), buckets.back().end(), buckets.begin(), buckets.end()};}
+    iterator end() {return {buckets.back().end(), buckets.back().end(), buckets.end()-1, buckets.end()};}
+    const_iterator begin() const { return {buckets.front().begin(), buckets.back().end(), buckets.begin(), buckets.end()};}
+    const_iterator end() const {return {buckets.back().end(), buckets.back().end(), buckets.end()-1, buckets.end()};}
     size_t size() const { return _size; }
     size_t bucket_capacity() const { return _capacity; }
     bool empty() const { return _size == 0; }
@@ -204,12 +223,28 @@ class set {
         _size = other._size;
         return *this;
     }
-    iterator find(T const& data) const {
+    iterator find(T const& data) {
         size_t hvals[set_traits<T>::lookup_hnum];
         set_traits<T>::lookup(data, hvals);
         for (size_t i = 0; i < set_traits<T>::lookup_hnum; ++i) {
             for (size_t j = 0; j < buckets[hvals[i]%_capacity].size(); ++j) {
-                if (set_traits<T>::equal(buckets[hvals[i%_capacity]][j], data)) {return iterator(&buckets[hvals[i]%_capacity][j], &buckets[hvals[i]%_capacity]);}
+                if (set_traits<T>::equal(buckets[hvals[i]%_capacity][j], data)) {
+                    return iterator(&buckets[hvals[i]%_capacity][j], buckets.back().end(),
+                        &buckets[hvals[i]%_capacity], buckets.end());
+                }
+            }
+        }
+        return end();
+    }
+    const_iterator find(T const& data) const {
+        size_t hvals[set_traits<T>::lookup_hnum];
+        set_traits<T>::lookup(data, hvals);
+        for (size_t i = 0; i < set_traits<T>::lookup_hnum; ++i) {
+            for (size_t j = 0; j < buckets[hvals[i]%_capacity].size(); ++j) {
+                if (set_traits<T>::equal(buckets[hvals[i]%_capacity][j], data)) {
+                    return const_iterator(&buckets[hvals[i]%_capacity][j], buckets.back().end(),
+                        &buckets[hvals[i]%_capacity], buckets.end());
+                }
             }
         }
         return end();
