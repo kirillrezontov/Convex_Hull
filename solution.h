@@ -2,12 +2,12 @@
 #define SOLUTION_H
 #include "vector.h"
 #include "algorythm.h"
-#define _eps 0.0000001
-#define abs_(x) ((x) < 0 ? -(x) : (x))
+#include "cmath"
 struct point {
     double x, y;
+    static constexpr double epsilon = 0.0000001;
     bool operator==(const point & other) const {
-        return abs_(x-other.x) < _eps && abs_(y - other.y) < _eps;
+        return abs(x-other.x) < epsilon && abs(y - other.y) < epsilon;
     }
 };
 

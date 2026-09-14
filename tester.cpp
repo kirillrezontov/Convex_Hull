@@ -111,7 +111,7 @@ Tester::test::test(int n, double radius, double distribution) {
     for (int i = 0; i < n; ++i) {
         double r = radius*pow(1.*rand()/RAND_MAX, distribution);
         double angle = double(rand()) / RAND_MAX * 2 * PI;
-        points.push_back({r*cos(angle), r*sin(angle)});
+        points.insert(point{r*cos(angle), r*sin(angle)});
     }
 }
 

@@ -12,10 +12,9 @@ struct result {
     uint64_t time; bool success;
 };
 
-
 template<>
 struct set_traits<point> {
-    static constexpr double epsilon = 0.0000001;
+    static constexpr double epsilon = point::epsilon;
     static constexpr double step = 2*epsilon;
     static bool equal(const point& a, const point& b) {
         return abs(a.x-b.x)<epsilon && abs(a.y-b.y)<epsilon;
@@ -34,7 +33,7 @@ struct set_traits<point> {
         int k = 0;
         for (int i = -1; i <= 1; ++i) {
             for (int j = -1; j <= 1; ++j) {
-                out[k++] = hash({data.x+i*step, data.y+j*step});
+                out[k++] = hash(point{data.x+i*step, data.y+j*step});
             }
         }
         return 9;
@@ -43,7 +42,7 @@ struct set_traits<point> {
 
 class Tester {
     class test {
-        vector<point> points;
+        set<point> points;
     public:
         test(int n, double radius, double distribution);
         test(int n);
