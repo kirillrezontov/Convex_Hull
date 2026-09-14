@@ -74,7 +74,7 @@ void OptimalSolution::Solve() {
         }
         hull.push_back(psorted[i]);
     }
-    for (size_t i = points.size()-1; i >= 0; --i) {
+    for (int64_t i = points.size()-1; i >= 0; --i) {
         while (hull.size() > 1 && vector_product(vec(*(hull.end()-1), *(hull.end()-2)),
             vec(*(hull.end()-1), psorted[i])) > 0) {
             hull.pop_back();

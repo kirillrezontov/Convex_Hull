@@ -23,5 +23,11 @@ int main() {
     catch (BadFile& e) {
         e.what();
     }
+    catch (BadIndex& e) {
+        e.what();
+    }
+    catch (BadAlloc& e) {
+        e.what();
+    }
     return 0;
 }

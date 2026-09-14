@@ -208,8 +208,8 @@ class set {
         size_t hvals[set_traits<T>::lookup_hnum];
         set_traits<T>::lookup(data, hvals);
         for (size_t i = 0; i < set_traits<T>::lookup_hnum; ++i) {
-            for (size_t j = 0; j < buckets[hvals[i]].size(); ++j) {
-                if (set_traits<T>::equal(buckets[hvals[i]][j], data)) {return iterator(&buckets[hvals[i]][j], &buckets[hvals[i]]);}
+            for (size_t j = 0; j < buckets[hvals[i]%_capacity].size(); ++j) {
+                if (set_traits<T>::equal(buckets[hvals[i%_capacity]][j], data)) {return iterator(&buckets[hvals[i]%_capacity][j], &buckets[hvals[i]%_capacity]);}
             }
         }
         return end();
@@ -219,7 +219,7 @@ class set {
         set_traits<T>::lookup(data, hvals);
         for (size_t i = 0; i < set_traits<T>::lookup_hnum; ++i) {
             for (size_t j = 0; j < buckets[hvals[i]%_capacity].size(); ++j) {
-                if (set_traits<T>::equal(buckets[hvals[i]][j], data)) {
+                if (set_traits<T>::equal(buckets[hvals[i]%_capacity][j], data)) {
                     return true;
                 }
             }

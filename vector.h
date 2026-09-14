@@ -17,8 +17,8 @@ class BadIndex {
     const size_t _i;
     const size_t _size;
     public:
-    BadIndex(size_t i, size_t size) : _i(i), _size(size) {}
-    void what() const { std::cerr << "BadIndex: " << _i << ' ' << _size << std::endl; }
+    BadIndex(size_t i, size_t size) : _i(i), _size(size){}
+    void what() const { std::cerr << "BadIndex: "<< _i << ' ' << _size << std::endl; }
 };
 class BadFile {
     const char* _filename;
