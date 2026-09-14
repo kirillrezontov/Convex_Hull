@@ -65,7 +65,7 @@ OptimalSolution::OptimalSolution(const char* filename):
 
 void OptimalSolution::Solve() {
     auto psorted(points);
-    sort(psorted.begin(), psorted.end(), less<point>());
+    sort(psorted.begin(), psorted.end());
     hull.push_back(psorted[0]), hull.push_back(psorted[1]);
     for (int i = 2; i < points.size(); ++i) {
         while (hull.size() > 1 && vector_product(vec(*(hull.end()-1), *(hull.end()-2)),
