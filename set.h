@@ -7,6 +7,7 @@
 #include "vector.h"
 #include "algorythm.h"
 #include <cmath>
+#include <cstdint>
 
 template <typename T>
 struct set_traits {
@@ -21,7 +22,7 @@ struct set_traits {
             hval ^= buf[i];
             hval *= 1099511628211ULL;
         }
-        return hval;
+        return hval%INT64_MAX;
     }
     static int64_t lookup(const T& data, size_t* out) {
         out[0] = hash(data);
@@ -44,7 +45,7 @@ struct set_traits<double> {
             hval ^= buf[i];
             hval *= 1099511628211ULL;
         }
-        return hval;
+        return hval%INT64_MAX;
     }
     static int64_t lookup(const double& data, size_t* out) {
         out[0] = hash(data-epsilon);
@@ -363,7 +364,7 @@ public:
             ibegin = iter;
             cbegin = iter;
         }
-        else if (iend <= iter) {
+        else if (!(iter < iend)) {
             iend = {iter.ptr+1, iter.vptr, iter.ownr};
             cend = {iter.ptr+1, iter.vptr, iter.ownr};
         }
@@ -387,7 +388,7 @@ public:
             ibegin = iter;
             cbegin = iter;
         }
-        else if (iend < iter) {
+        else if (!(iend < iter)) {
             iend = iter;
             cend = iter;
         }
