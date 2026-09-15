@@ -62,14 +62,10 @@ class set {
     vector<vector<T>> buckets;
 
     int64_t cap_count(int64_t cap) {
-        static bool initialized = false;
-        if (!initialized) {
-            _capacity = 0;
-        }
         if (cap < 8) { return 8; }
-        int64_t old_cap = _capacity;
-        while (old_cap < cap) { old_cap<<=1; }
-        return old_cap;
+        int64_t new_cap = 1;
+        while (new_cap < cap) { new_cap<<=1; }
+        return new_cap;
     }
 
     void rehash(int64_t new_cap) {
@@ -247,7 +243,7 @@ protected:
 public:
     const_iterator begin() const {return cbegin;}
     const_iterator end() const {return cend;}
-    iterator begin() {return ibegin();}
+    iterator begin() {return ibegin;}
     iterator end() {return iend;}
     int64_t size() const { return _size; }
     int64_t bucket_capacity() const { return _capacity; }
@@ -261,9 +257,30 @@ public:
         cend(buckets.begin()->end(), buckets.begin(), *this) {}
 
     set(set const& other):  _size(other.size),_capacity(other._capacity), buckets(other.buckets),
-        ibegin(other.ibegin), iend(other.iend), cbegin(other.cbegin), cend(other.cend) {}
+        ibegin(buckets.begin()->begin(), buckets.begin(), *this),
+        iend(buckets.begin()->end(), buckets.begin(), *this),
+        cbegin(buckets.begin()->begin(), buckets.begin(), *this),
+        cend(buckets.begin()->end(), buckets.begin(), *this)
+    {
+        for (int64_t i = 0; i < _capacity; i++) {
+            if (buckets[i].size()) {
+                ibegin = iterator{buckets[i].begin(), &buckets[i], *this};
+                cbegin = const_iterator{buckets[i].begin(), &buckets[i], *this};
+                break;
+            }
+        }
+        for (int64_t i = _capacity-1; i >= 0; i--) {
+            if (buckets[i].size()) {
+                iend = iterator{buckets[i].end(), &buckets[i], *this};
+                cend = const_iterator{buckets[i].end(), &buckets[i], *this};
+                break;
+            }
+        }
+    }
     set(set&& other) noexcept : _size{other._size}, _capacity{other._capacity}, buckets{move(other.buckets)},
-        ibegin(other.ibegin), iend(other.iend), cbegin(other.cbegin), cend(other.cend) {
+        ibegin{other.ibegin.ptr, other.ibegin.vptr, *this}, iend{other.iend.ptr, other.iend.vptr, *this},
+        cbegin{other.cbegin.ptr, other.cbegin.vptr, *this}, cend{other.iend.ptr, other.iend.vptr, *this}
+    {
         other._size = 0;
     }
 
@@ -401,7 +418,7 @@ public:
                     cend.ptr = cend.vptr->end();
                 }
             }
-            iter.vp->remove(iter.p);
+            iter.vptr->remove(iter.ptr);
             _size--;
             return true;
         }

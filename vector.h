@@ -240,7 +240,7 @@ public:
         return *this;
     }
     string& operator+=(const char* str) {
-        auto len = (int64_t)(str), size = _size-1;
+        auto len = (int64_t)strlen(str), size = _size-1;
         resize(size + len);
         strcpy(_arr+size, str);
         return *this;
