@@ -29,11 +29,11 @@ struct set_traits<point> {
         }
         return hval;
     }
-    static size_t lookup(const point& data, size_t* out) {
+    static size_t lookup(const point& data, int64_t* out) {
         int k = 0;
         for (int i = -1; i <= 1; ++i) {
             for (int j = -1; j <= 1; ++j) {
-                out[k++] = hash(point{data.x+i*step, data.y+j*step});
+                out[k++] = (int64_t)hash(point{data.x+i*step, data.y+j*step})%INT64_MAX;
             }
         }
         return 9;

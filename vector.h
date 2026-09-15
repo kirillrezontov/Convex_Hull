@@ -52,7 +52,6 @@ public:
     const_iterator end() const { return _arr+_size; }
     iterator begin(){return _arr;}
     iterator end(){return _arr+_size;}
-
     vector():_arr(nullptr), _size(0), _capacity(0) {}
 
     vector(const vector& v): _arr(nullptr), _size(0), _capacity(0) {
@@ -186,6 +185,13 @@ public:
     void clear() {
         destroy_arr(_arr, _size);
         _size = 0;
+    }
+
+    bool operator==(const vector &other) const {
+        return _arr == other._arr;
+    }
+    bool operator!=(const vector &other) const {
+        return _arr != other._arr;
     }
 };
 

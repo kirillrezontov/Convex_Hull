@@ -54,15 +54,28 @@ struct set_traits<double> {
     }
 };
 
+
 template <typename T>
 class set {
     protected:
     int64_t _size, _capacity;
     vector<vector<T>> buckets;
+
+    int64_t cap_count(int64_t cap) {
+        static bool initialized = false;
+        if (!initialized) {
+            _capacity = 0;
+        }
+        if (cap < 8) { return 8; }
+        int64_t old_cap = _capacity;
+        while (old_cap < cap) { old_cap<<=1; }
+        return old_cap;
+    }
+
     void rehash(int64_t new_cap) {
         if (new_cap <= _capacity) { return; }
         auto old = move(buckets);
-        int64_t cap = 1; while (cap < new_cap) cap <<= 1;
+        int64_t cap = cap_count(new_cap);
         buckets = vector<vector<T>>(cap);
         for (int64_t i = 0; i < old.size(); ++i) {
             for (auto& e : old[i]) {
@@ -73,20 +86,26 @@ class set {
         _capacity = new_cap;
         for (int64_t i = 0; i < _capacity; i++) {
             if (buckets[i].size()) {
-                ibegin = buckets[i].begin();
-                cbegin = buckets[i].begin();
+                ibegin = iterator{buckets[i].begin(), &buckets[i], *this};
+                cbegin = const_iterator{buckets[i].begin(), &buckets[i], *this};
                 break;
             }
         }
         for (int64_t i = _capacity-1; i >= 0; i--) {
             if (buckets[i].size()) {
-                iend = buckets[i].end();
-                cend = buckets[i].end();
+                iend = iterator{buckets[i].end(), &buckets[i], *this};
+                cend = const_iterator{buckets[i].end(), &buckets[i], *this};
                 break;
             }
         }
     }
     public:
+    bool operator!=(const set<T>& other) const {
+        return buckets != other.buckets;
+    }
+    bool operator==(const set<T>& other) const {
+        return buckets == other.buckets;
+    }
     class iterator {
         friend class set;
     protected:
@@ -98,39 +117,44 @@ class set {
         iterator& operator=(const iterator& other) {
             if (ownr != other.ownr) throw BadIndex(ownr._size, ownr._size);
             ptr = other.ptr; vptr = other.vptr;
+            return *this;
         }
         bool operator<(const iterator& other) const {
             return vptr<other.vptr || (vptr == other.vptr && ptr < other.ptr);
         }
+        T& operator*() { return *ptr; }
+        T* operator->() { return ptr; }
         iterator operator++() {
-            if (ptr == ownr.iend) throw BadIndex(ownr._size, ownr._size);
+            if (!(*this < ownr.iend)) throw BadIndex(ownr._size, ownr._size);
             iterator iter = *this; ++ptr;
-            while (ptr != ownr.iend && ptr == vptr->end()) {
+            while (ptr != ownr.iend.ptr && ptr == vptr->end()) {
                 vptr++; ptr=vptr->begin();
             }
             return iter;
         }
         iterator& operator++(int) {
-            if (ptr == ownr.iend) throw BadIndex(ownr._size, ownr._size);
+            if (!(*this < ownr.iend)) throw BadIndex(ownr._size, ownr._size);
             ++ptr;
-            while (ptr != ownr.iend && ptr == vptr->end()) {
+            while (ptr != ownr.iend.ptr && ptr == vptr->end()) {
                 vptr++; ptr=vptr->begin();
             }
             return *this;
         }
         iterator operator--() {
             iterator iter = *this;
-            while (ptr != ownr.ibegin && ptr == vptr->begin()) {
+            if (ownr.iend < *this) throw BadIndex(ownr._size + (ptr - ownr.iend), ownr._size);
+            while (ptr != ownr.ibegin.ptr && ptr == vptr->begin()) {
                 vptr--; ptr=vptr->end();
             }
-            if (ptr == ownr.ibegin) throw BadIndex(-1, ownr._size);
+            if (ptr == ownr.ibegin.ptr) throw BadIndex(-1, ownr._size);
             ptr--; return iter;
         }
         iterator& operator--(int) {
-            while (ptr != ownr.ibegin && ptr == vptr->begin()) {
+            if (ownr.iend < *this) throw BadIndex(ownr._size + (ptr - ownr.iend), ownr._size);
+            while (ptr != ownr.ibegin.ptr && ptr == vptr->begin()) {
                 vptr--; ptr=vptr->end();
             }
-            if (ptr == ownr.ibegin) throw BadIndex(-1, ownr._size);
+            if (ptr == ownr.ibegin.ptr) throw BadIndex(-1, ownr._size);
             ptr--; return *this;
         }
         bool operator==(const iterator& other) const {
@@ -155,45 +179,51 @@ class set {
         const_iterator& operator=(const iterator& other) {
             if (ownr != other.ownr) throw BadIndex(ownr._size, ownr._size);
             ptr = other.ptr; vptr = other.vptr;
+            return *this;
         }
     public:
         const_iterator(const const_iterator& other): ptr(other.ptr), vptr(other.vptr), ownr(other.ownr) {}
         const_iterator& operator=(const const_iterator& other) {
             if (ownr != other.ownr) throw BadIndex(ownr._size, ownr._size);
             ptr = other.ptr; vptr = other.vptr;
+            return *this;
         }
         bool operator<(const const_iterator& other) const {
             return vptr<other.vptr || (vptr == other.vptr && ptr < other.ptr);
         }
+        const T& operator*() const { return *ptr; }
+        const T* operator->() const { return ptr; }
         const_iterator operator++() {
-            if (ptr == ownr.cend) throw BadIndex(ownr._size, ownr._size);
+            if (!(*this < ownr.cend)) throw BadIndex(ownr._size, ownr._size);
             const_iterator iter = *this; ++ptr;
-            while (ptr != ownr.cend && ptr == vptr->end()) {
+            while (ptr != ownr.cend.ptr && ptr == vptr->end()) {
                 vptr++; ptr=vptr->begin();
             }
             return iter;
         }
         const_iterator& operator++(int) {
-            if (ptr == ownr.cend) throw BadIndex(ownr._size, ownr._size);
+            if (!(*this < ownr.cend)) throw BadIndex(ownr._size, ownr._size);
             ++ptr;
-            while (ptr != ownr.cend && ptr == vptr->end()) {
+            while (ptr != ownr.cend.ptr && ptr == vptr->end()) {
                 vptr++; ptr=vptr->begin();
             }
             return *this;
         }
         const_iterator operator--() {
             iterator iter = *this;
-            while (ptr != ownr.cbegin && ptr == vptr->begin()) {
+            if (ownr.cend < *this) throw BadIndex(ownr._size + (ptr - ownr.cend), ownr._size);
+            while (ptr != ownr.cbegin.ptr && ptr == vptr->begin()) {
                 vptr--; ptr=vptr->end();
             }
-            if (ptr == ownr.cbegin) throw BadIndex(-1, ownr._size);
+            if (ptr == ownr.cbegin.ptr) throw BadIndex(-1, ownr._size);
             ptr--; return iter;
         }
         const_iterator& operator--(int) {
-            while (ptr != ownr.cbegin && ptr == vptr->begin()) {
+            if (ownr.cend < *this) throw BadIndex(ownr._size + (ptr - ownr.cend), ownr._size);
+            while (ptr != ownr.cbegin.ptr && ptr == vptr->begin()) {
                 vptr--; ptr=vptr->end();
             }
-            if (ptr == ownr.cbegin) throw BadIndex(-1, ownr._size);
+            if (ptr == ownr.cbegin.ptr) throw BadIndex(-1, ownr._size);
             ptr--; return *this;
         }
         bool operator==(const const_iterator& other) const {
@@ -221,21 +251,22 @@ public:
     iterator end() {return iend;}
     int64_t size() const { return _size; }
     int64_t bucket_capacity() const { return _capacity; }
+
     bool empty() const { return _size == 0; }
-    set(int64_t bucket_cap = 16): _size(0), _capacity(0) {
-        bucket_cap = bucket_cap < 8 ? 8 : bucket_cap;
-        int64_t cap = 1; while (cap < bucket_cap) cap <<= 1;
-        _capacity = cap;
-        buckets = vector<vector<T>>(cap);
-        ibegin = iterator{buckets.front().begin(), buckets.front(), *this};
-        cbegin = const_iterator{buckets.front().begin(), buckets.front(), *this};
-    }
+
+    set(int64_t bucket_cap = 16): _size(0), _capacity(cap_count(bucket_cap)), buckets(bucket_cap),
+        ibegin(buckets.begin()->begin(), buckets.begin(), *this),
+        iend(buckets.begin()->end(), buckets.begin(), *this),
+        cbegin(buckets.begin()->begin(), buckets.begin(), *this),
+        cend(buckets.begin()->end(), buckets.begin(), *this) {}
+
     set(set const& other):  _size(other.size),_capacity(other._capacity), buckets(other.buckets),
         ibegin(other.ibegin), iend(other.iend), cbegin(other.cbegin), cend(other.cend) {}
     set(set&& other) noexcept : _size{other._size}, _capacity{other._capacity}, buckets{move(other.buckets)},
         ibegin(other.ibegin), iend(other.iend), cbegin(other.cbegin), cend(other.cend) {
         other._size = 0;
     }
+
     set& operator = (set const& other) {
         if (this == &other) { return *this; }
         buckets = other.buckets;
@@ -247,6 +278,7 @@ public:
         cend = other.cend;
         return *this;
     }
+
     set& operator = (set&& other) noexcept {
         if (this == &other) { return *this; }
         buckets = move(other.buckets);
@@ -258,6 +290,7 @@ public:
         cend = other.cend;
         return *this;
     }
+
     iterator find(T const& data) {
         int64_t hvals[set_traits<T>::lookup_hnum];
         set_traits<T>::lookup(data, hvals);
@@ -270,6 +303,7 @@ public:
         }
         return end();
     }
+
     const_iterator find(T const& data) const {
         int64_t hvals[set_traits<T>::lookup_hnum];
         set_traits<T>::lookup(data, hvals);
@@ -282,6 +316,7 @@ public:
         }
         return end();
     }
+
     bool contains(T const& data) const {
         int64_t hvals[set_traits<T>::lookup_hnum];
         set_traits<T>::lookup(data, hvals);
@@ -294,12 +329,13 @@ public:
         }
         return false;
     }
+
     bool insert(T const& data) {
         if (contains(data)) { return false; }
         if (2*_size >= _capacity) {rehash(_capacity * 2); }
         int64_t hval = set_traits<T>::hash(data);
         buckets[hval%_capacity].push_back(data);
-        iterator iter = {buckets[hval%_capacity].end()-1, buckets[hval%_capacity], *this};
+        iterator iter = {buckets[hval%_capacity].end()-1, &buckets[hval%_capacity], *this};
         if ( _size == 0 ) {
             ibegin = iter;
             iend = iter;
@@ -317,12 +353,13 @@ public:
         _size++;
         return true;
     }
+
     bool insert(T&& data) {
         if (contains(data)) { return false; }
         if (2*_size >= _capacity) {rehash(_capacity * 2); }
         int64_t hval = set_traits<T>::hash(data);
         buckets[hval%_capacity].push_back(move(data));
-        iterator iter = {buckets[hval%_capacity].end()-1, buckets[hval%_capacity], *this};
+        iterator iter = {buckets[hval%_capacity].end()-1, &buckets[hval%_capacity], *this};
         if ( _size == 0 ) {
             ibegin = iter;
             iend = iter;
@@ -340,6 +377,7 @@ public:
         _size++;
         return true;
     }
+
     bool remove(T const& data) {
         auto iter = find(data);
         if (iter != iend) {
