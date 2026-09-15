@@ -15,14 +15,14 @@ struct set_traits {
         return a == b;
     }
     static constexpr int64_t lookup_hnum = 1;
-    static size_t hash(const T& data) {
+    static int64_t hash(const T& data) {
         auto buf = (char*)&data;
         size_t hval = 1469598103934665603ULL;
         for (int64_t i = 0; i < sizeof(T); ++i) {
             hval ^= buf[i];
             hval *= 1099511628211ULL;
         }
-        return hval%INT64_MAX;
+        return (int64_t)hval%INT64_MAX;
     }
     static int64_t lookup(const T& data, size_t* out) {
         out[0] = hash(data);
@@ -38,14 +38,14 @@ struct set_traits<double> {
         return fabs(a-b)<epsilon;
     }
     static constexpr int64_t lookup_hnum = 3;
-    static size_t hash(const double& data) {
+    static int64_t hash(const double& data) {
         int64_t e_data = floor(data/step+0.5);
         auto buf = (char*)&e_data; size_t hval = 1469598103934665603ULL;
         for (int64_t i = 0; i < sizeof(double); ++i) {
             hval ^= buf[i];
             hval *= 1099511628211ULL;
         }
-        return hval%INT64_MAX;
+        return (int64_t)hval%INT64_MAX;
     }
     static int64_t lookup(const double& data, size_t* out) {
         out[0] = hash(data-epsilon);
@@ -110,7 +110,7 @@ class set {
         set& ownr;
         iterator(T* p,vector<T>* vp, set& owner):ptr(p), vptr(vp), ownr(owner) {}
     public:
-        iterator(const iterator& other): ptr(other.ptr), vptr(other.vptr), ownr(other.ownr) {}
+        iterator(const iterator& other) noexcept : ptr(other.ptr), vptr(other.vptr), ownr(other.ownr) {}
         iterator& operator=(const iterator& other) {
             if (ownr != other.ownr) throw BadIndex(ownr._size, ownr._size);
             ptr = other.ptr; vptr = other.vptr;
@@ -139,7 +139,7 @@ class set {
         }
         iterator operator--() {
             iterator iter = *this;
-            if (ownr.iend < *this) throw BadIndex(ownr._size + (ptr - ownr.iend), ownr._size);
+            if (ownr.iend < *this) throw BadIndex(ownr._size + (ptr - ownr.iend.ptr), ownr._size);
             while (ptr != ownr.ibegin.ptr && ptr == vptr->begin()) {
                 vptr--; ptr=vptr->end();
             }
@@ -147,7 +147,7 @@ class set {
             ptr--; return iter;
         }
         iterator& operator--(int) {
-            if (ownr.iend < *this) throw BadIndex(ownr._size + (ptr - ownr.iend), ownr._size);
+            if (ownr.iend < *this) throw BadIndex(ownr._size + (ptr - ownr.iend.ptr), ownr._size);
             while (ptr != ownr.ibegin.ptr && ptr == vptr->begin()) {
                 vptr--; ptr=vptr->end();
             }
@@ -179,7 +179,7 @@ class set {
             return *this;
         }
     public:
-        const_iterator(const const_iterator& other): ptr(other.ptr), vptr(other.vptr), ownr(other.ownr) {}
+        const_iterator(const const_iterator& other) noexcept : ptr(other.ptr), vptr(other.vptr), ownr(other.ownr) {}
         const_iterator& operator=(const const_iterator& other) {
             if (ownr != other.ownr) throw BadIndex(ownr._size, ownr._size);
             ptr = other.ptr; vptr = other.vptr;
@@ -208,7 +208,7 @@ class set {
         }
         const_iterator operator--() {
             iterator iter = *this;
-            if (ownr.cend < *this) throw BadIndex(ownr._size + (ptr - ownr.cend), ownr._size);
+            if (ownr.cend < *this) throw BadIndex(ownr._size + (ptr - ownr.cend.ptr), ownr._size);
             while (ptr != ownr.cbegin.ptr && ptr == vptr->begin()) {
                 vptr--; ptr=vptr->end();
             }
@@ -216,7 +216,7 @@ class set {
             ptr--; return iter;
         }
         const_iterator& operator--(int) {
-            if (ownr.cend < *this) throw BadIndex(ownr._size + (ptr - ownr.cend), ownr._size);
+            if (ownr.cend < *this) throw BadIndex(ownr._size + (ptr - ownr.cend.ptr), ownr._size);
             while (ptr != ownr.cbegin.ptr && ptr == vptr->begin()) {
                 vptr--; ptr=vptr->end();
             }
@@ -290,10 +290,20 @@ public:
         buckets = other.buckets;
         _capacity = other._capacity;
         _size = other._size;
-        ibegin = other.ibegin;
-        iend = other.iend;
-        cbegin = other.cbegin;
-        cend = other.cend;
+        for (int64_t i = 0; i < _capacity; i++) {
+            if (buckets[i].size()) {
+                ibegin = iterator{buckets[i].begin(), &buckets[i], *this};
+                cbegin = const_iterator{buckets[i].begin(), &buckets[i], *this};
+                break;
+            }
+        }
+        for (int64_t i = _capacity-1; i >= 0; i--) {
+            if (buckets[i].size()) {
+                iend = iterator{buckets[i].end(), &buckets[i], *this};
+                cend = const_iterator{buckets[i].end(), &buckets[i], *this};
+                break;
+            }
+        }
         return *this;
     }
 
@@ -302,10 +312,9 @@ public:
         buckets = move(other.buckets);
         _capacity = other._capacity;
         _size = other._size;
-        ibegin = other.ibegin;
-        iend = other.iend;
-        cbegin = other.cbegin;
-        cend = other.cend;
+        ibegin={other.ibegin.ptr, other.ibegin.vptr, *this}; iend={other.iend.ptr, other.iend.vptr, *this};
+        cbegin={other.cbegin.ptr, other.cbegin.vptr, *this}; cend={other.iend.ptr, other.iend.vptr, *this};
+        other._size = 0;
         return *this;
     }
 
@@ -357,8 +366,8 @@ public:
         if ( _size == 0 ) {
             ibegin = iter;
             iend = iter;
-            cbegin = iter;
-            cend = iter;
+            iend = {iter.ptr+1, iter.vptr, iter.ownr};
+            cend = {iter.ptr+1, iter.vptr, iter.ownr};
         }
         else if (iter < ibegin) {
             ibegin = iter;
@@ -381,16 +390,16 @@ public:
         if ( _size == 0 ) {
             ibegin = iter;
             iend = iter;
-            cbegin = iter;
-            cend = iter;
+            iend = {iter.ptr+1, iter.vptr, iter.ownr};
+            cend = {iter.ptr+1, iter.vptr, iter.ownr};
         }
         else if (iter < ibegin) {
             ibegin = iter;
             cbegin = iter;
         }
-        else if (!(iend < iter)) {
-            iend = iter;
-            cend = iter;
+        else if (!(iter < iend)) {
+            iend = {iter.ptr+1, iter.vptr, iter.ownr};
+            cend = {iter.ptr+1, iter.vptr, iter.ownr};
         }
         _size++;
         return true;

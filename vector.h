@@ -229,19 +229,19 @@ public:
     }
     string& operator+=(const string& str) {
         int64_t len = str._size, size = _size-1;
-        resize(size + len);
+        resize(size + len + 1);
         strcpy(_arr+size, str._arr);
         return *this;
     }
     string& operator+=(string&& str) {
         int64_t len = str._size, size = _size-1;
-        resize(size + len);
+        resize(size + len + 1);
         strcpy(_arr+size, str._arr);
         return *this;
     }
     string& operator+=(const char* str) {
         auto len = (int64_t)strlen(str), size = _size-1;
-        resize(size + len);
+        resize(size + len + 1);
         strcpy(_arr+size, str);
         return *this;
     }

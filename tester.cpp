@@ -8,6 +8,7 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <thread>
 #define PI 3.14159265359
 #define tfile "test/test_"
 #define tcount "test/test_count.txt"
@@ -24,12 +25,15 @@ Tester::Tester() {
     }
 }
 
-Tester::Tester(int n, int m, double radius, double distribution) {
+Tester::Tester(int n, int m, double radius, double distribution):optimal_results(n), naive_results(n) {
     if (n<=0 || m <= 2) return;
+    tests.resize(n);
+    vector<std::jthread> threads;
+    threads.reserve(n);
     for (int i = 0; i < n; ++i) {
         std::cout << "\rGenerating tests " << 100*i/n << "%...";
         std::cout.flush();
-        tests.push_back(test(m, radius, distribution));
+        tests.;
     }
     std::cout << "\rGenerating tests 100%\n";
     std::cout.flush();
@@ -99,6 +103,8 @@ void Tester::PrintResults(const char* filename) const {
     cout << "\nNaive solution:\npassed " << ns << '/' << naive_results.size() << ", avg time " << nt/naive_results.size() << " us\n" ;
     cout << std::endl;
 }
+
+Tester::test::test(test&& other) noexcept : points(move(other.points)) {}
 
 Tester::test::test(int n) {
     for (int i = 0; i < n; ++i) {

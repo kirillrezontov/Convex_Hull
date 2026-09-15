@@ -20,20 +20,20 @@ struct set_traits<point> {
         return fabs(a.x-b.x)<epsilon && fabs(a.y-b.y)<epsilon;
     }
     static constexpr size_t lookup_hnum = 9;
-    static size_t hash(const point& data) {
+    static int64_t hash(const point& data) {
         int64_t e_data[2] {(int64_t)floor(data.x/step+0.5), (int64_t)floor(data.y/step+0.5)};
         auto buf = (char*)&e_data; size_t hval = 1469598103934665603ULL;
         for (size_t i = 0; i < sizeof(size_t)*2; ++i) {
             hval ^= buf[i];
             hval *= 1099511628211ULL;
         }
-        return hval%INT64_MAX;
+        return (int64_t)hval%INT64_MAX;
     }
     static size_t lookup(const point& data, int64_t* out) {
         int k = 0;
         for (int i = -1; i <= 1; ++i) {
             for (int j = -1; j <= 1; ++j) {
-                out[k++] = (int64_t)hash(point{data.x+i*step, data.y+j*step});
+                out[k++] = hash(point{data.x+i*step, data.y+j*step});
             }
         }
         return 9;
@@ -42,10 +42,14 @@ struct set_traits<point> {
 
 class Tester {
     class test {
+    protected:
+        friend class vector<test>;
         set<point> points;
+        test() = default;
     public:
         test(int n, double radius, double distribution);
         test(int n);
+        test(test&& other) noexcept;
         void FillFile(const char* filename) const;
         result check(Solution& solution) const;
     };
