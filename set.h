@@ -390,16 +390,16 @@ public:
         if ( _size == 0 ) {
             ibegin = iter;
             iend = iter;
-            iend = {iter.ptr+1, iter.vptr, iter.ownr};
-            cend = {iter.ptr+1, iter.vptr, iter.ownr};
+            iend = iterator{iter.ptr+1, iter.vptr, iter.ownr};
+            cend = const_iterator{iter.ptr+1, iter.vptr, iter.ownr};
         }
         else if (iter < ibegin) {
             ibegin = iter;
             cbegin = iter;
         }
         else if (!(iter < iend)) {
-            iend = {iter.ptr+1, iter.vptr, iter.ownr};
-            cend = {iter.ptr+1, iter.vptr, iter.ownr};
+            iend = iterator{iter.ptr+1, iter.vptr, iter.ownr};
+            cend = const_iterator{iter.ptr+1, iter.vptr, iter.ownr};
         }
         _size++;
         return true;

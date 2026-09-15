@@ -27,7 +27,7 @@ struct set_traits<point> {
             hval ^= buf[i];
             hval *= 1099511628211ULL;
         }
-        return (int64_t)hval%INT64_MAX;
+        return (int64_t)(hval%INT64_MAX);
     }
     static size_t lookup(const point& data, int64_t* out) {
         int k = 0;

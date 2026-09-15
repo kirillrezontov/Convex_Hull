@@ -25,15 +25,12 @@ Tester::Tester() {
     }
 }
 
-Tester::Tester(int n, int m, double radius, double distribution):optimal_results(n), naive_results(n) {
+Tester::Tester(int n, int m, double radius, double distribution) {
     if (n<=0 || m <= 2) return;
-    tests.resize(n);
-    vector<std::jthread> threads;
-    threads.reserve(n);
     for (int i = 0; i < n; ++i) {
         std::cout << "\rGenerating tests " << 100*i/n << "%...";
         std::cout.flush();
-        tests.;
+        tests.push_back(test(m, radius, distribution));
     }
     std::cout << "\rGenerating tests 100%\n";
     std::cout.flush();
