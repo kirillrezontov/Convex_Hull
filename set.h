@@ -65,12 +65,26 @@ class set {
         int64_t cap = 1; while (cap < new_cap) cap <<= 1;
         buckets = vector<vector<T>>(cap);
         for (int64_t i = 0; i < old.size(); ++i) {
-            for (const auto& e : old[i]) {
+            for (auto& e : old[i]) {
                 int64_t h = set_traits<T>::hash(e);
-                buckets[h%cap].push_back(e);
+                buckets[h%cap].push_back(move(e));
             }
         }
         _capacity = new_cap;
+        for (int64_t i = 0; i < _capacity; i++) {
+            if (buckets[i].size()) {
+                ibegin = buckets[i].begin();
+                cbegin = buckets[i].begin();
+                break;
+            }
+        }
+        for (int64_t i = _capacity-1; i >= 0; i--) {
+            if (buckets[i].size()) {
+                iend = buckets[i].end();
+                cend = buckets[i].end();
+                break;
+            }
+        }
     }
     public:
     class iterator {
@@ -250,22 +264,19 @@ public:
         for (int64_t i = 0; i < set_traits<T>::lookup_hnum; ++i) {
             for (int64_t j = 0; j < buckets[hvals[i]%_capacity].size(); ++j) {
                 if (set_traits<T>::equal(buckets[hvals[i]%_capacity][j], data)) {
-                    return iterator(&buckets[hvals[i]%_capacity][j], buckets.back().end(),
-                        &buckets[hvals[i]%_capacity], buckets.end());
+                    return iterator(&buckets[hvals[i]%_capacity][j], &buckets[hvals[i]%_capacity], *this);
                 }
             }
         }
         return end();
     }
-    // НЕ ЗАБУДЬ НАПИСАТЬ ФАЙНДЫ ТАК ЧТОБЫ ЭТА ДРИСНЯ ХОТЯ БЫ СКОМПИЛИРОВАЛАСЬ
     const_iterator find(T const& data) const {
         int64_t hvals[set_traits<T>::lookup_hnum];
         set_traits<T>::lookup(data, hvals);
         for (int64_t i = 0; i < set_traits<T>::lookup_hnum; ++i) {
             for (int64_t j = 0; j < buckets[hvals[i]%_capacity].size(); ++j) {
                 if (set_traits<T>::equal(buckets[hvals[i]%_capacity][j], data)) {
-                    return const_iterator(&buckets[hvals[i]%_capacity][j], buckets.back().end(),
-                        &buckets[hvals[i]%_capacity], buckets.end());
+                    return const_iterator(&buckets[hvals[i]%_capacity][j], &buckets[hvals[i]%_capacity], *this);
                 }
             }
         }
@@ -299,9 +310,9 @@ public:
             ibegin = iter;
             cbegin = iter;
         }
-        else if (iend < iter) {
-            iend = iter;
-            cend = iter;
+        else if (iend <= iter) {
+            iend = {iter.ptr+1, iter.vptr, iter.ownr};
+            cend = {iter.ptr+1, iter.vptr, iter.ownr};
         }
         _size++;
         return true;
@@ -329,10 +340,29 @@ public:
         _size++;
         return true;
     }
-    //НЕ ЗАБУДЬ НАПИСАТЬ ХУЙНЮ ЧТОБЫ ПРИ УДАЛЕНИИ ИТЕРАТОРЫ СДВИГАЛИСЬ
     bool remove(T const& data) {
         auto iter = find(data);
-        if (iter != end()) {
+        if (iter != iend) {
+            if (ibegin.vptr == iter.vptr) {
+                if (iter.vptr->size() == 1) {
+                    do {
+                        ibegin->vptr++;
+                        cbegin->vptr++;
+                    }while (cbegin.vptr->empty());
+                    ibegin.ptr = ibegin.vptr->begin();
+                    cbegin.ptr = cbegin.vptr->begin();
+                }
+            }
+            if (iter.vptr == iend.vptr) {
+                if (iter.vptr->size() == 1) {
+                    do {
+                        iend->vptr--;
+                        cend->vptr--;
+                    }while (cend.vptr->empty());
+                    iend.ptr = iend.vptr->end();
+                    cend.ptr = cend.vptr->end();
+                }
+            }
             iter.vp->remove(iter.p);
             _size--;
             return true;
