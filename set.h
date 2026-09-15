@@ -5,8 +5,8 @@
 #ifndef CONVEX_HULL_SET_H
 #define CONVEX_HULL_SET_H
 #include "vector.h"
+#include "algorythm.h"
 #include <cmath>
-#include <filesystem>
 
 template <typename T>
 struct set_traits {
@@ -81,35 +81,42 @@ class set {
         iterator(T* p,vector<T>* vp, set& owner):ptr(p), vptr(vp), ownr(owner) {}
     public:
         iterator(const iterator& other): ptr(other.ptr), vptr(other.vptr), ownr(other.ownr) {}
+        iterator& operator=(const iterator& other) {
+            if (ownr != other.ownr) throw BadIndex(ownr._size, ownr._size);
+            ptr = other.ptr; vptr = other.vptr;
+        }
+        bool operator<(const iterator& other) const {
+            return vptr<other.vptr || (vptr == other.vptr && ptr < other.ptr);
+        }
         iterator operator++() {
-            if (ptr == ownr.end) throw BadIndex(ownr._size, ownr._size);
+            if (ptr == ownr.iend) throw BadIndex(ownr._size, ownr._size);
             iterator iter = *this; ++ptr;
-            while (ptr != ownr.end && ptr == vptr->end()) {
+            while (ptr != ownr.iend && ptr == vptr->end()) {
                 vptr++; ptr=vptr->begin();
             }
             return iter;
         }
         iterator& operator++(int) {
-            if (ptr == ownr.end) throw BadIndex(ownr._size, ownr._size);
+            if (ptr == ownr.iend) throw BadIndex(ownr._size, ownr._size);
             ++ptr;
-            while (ptr != ownr.end && ptr == vptr->end()) {
+            while (ptr != ownr.iend && ptr == vptr->end()) {
                 vptr++; ptr=vptr->begin();
             }
             return *this;
         }
         iterator operator--() {
             iterator iter = *this;
-            while (ptr != ownr.begin && ptr == vptr->begin()) {
+            while (ptr != ownr.ibegin && ptr == vptr->begin()) {
                 vptr--; ptr=vptr->end();
             }
-            if (ptr == ownr.begin) throw BadIndex(-1, ownr._size);
+            if (ptr == ownr.ibegin) throw BadIndex(-1, ownr._size);
             ptr--; return iter;
         }
         iterator& operator--(int) {
-            while (ptr != ownr.begin && ptr == vptr->begin()) {
+            while (ptr != ownr.ibegin && ptr == vptr->begin()) {
                 vptr--; ptr=vptr->end();
             }
-            if (ptr == ownr.begin) throw BadIndex(-1, ownr._size);
+            if (ptr == ownr.ibegin) throw BadIndex(-1, ownr._size);
             ptr--; return *this;
         }
         bool operator==(const iterator& other) const {
@@ -131,37 +138,48 @@ class set {
         vector<T>::const_iterator ptr; vector<vector<T>>::const_iterator vptr;
         set& ownr;
         const_iterator(const T* p, const vector<T>* vp, set& owner):ptr(p), vptr(vp), ownr(owner) {}
+        const_iterator& operator=(const iterator& other) {
+            if (ownr != other.ownr) throw BadIndex(ownr._size, ownr._size);
+            ptr = other.ptr; vptr = other.vptr;
+        }
     public:
         const_iterator(const const_iterator& other): ptr(other.ptr), vptr(other.vptr), ownr(other.ownr) {}
+        const_iterator& operator=(const const_iterator& other) {
+            if (ownr != other.ownr) throw BadIndex(ownr._size, ownr._size);
+            ptr = other.ptr; vptr = other.vptr;
+        }
+        bool operator<(const const_iterator& other) const {
+            return vptr<other.vptr || (vptr == other.vptr && ptr < other.ptr);
+        }
         const_iterator operator++() {
-            if (ptr == ownr.iend) throw BadIndex(ownr._size, ownr._size);
+            if (ptr == ownr.cend) throw BadIndex(ownr._size, ownr._size);
             const_iterator iter = *this; ++ptr;
-            while (ptr != ownr.iend && ptr == vptr->end()) {
+            while (ptr != ownr.cend && ptr == vptr->end()) {
                 vptr++; ptr=vptr->begin();
             }
             return iter;
         }
         const_iterator& operator++(int) {
-            if (ptr == ownr.iend) throw BadIndex(ownr._size, ownr._size);
+            if (ptr == ownr.cend) throw BadIndex(ownr._size, ownr._size);
             ++ptr;
-            while (ptr != ownr.iend && ptr == vptr->end()) {
+            while (ptr != ownr.cend && ptr == vptr->end()) {
                 vptr++; ptr=vptr->begin();
             }
             return *this;
         }
         const_iterator operator--() {
             iterator iter = *this;
-            while (ptr != ownr.ibegin && ptr == vptr->begin()) {
+            while (ptr != ownr.cbegin && ptr == vptr->begin()) {
                 vptr--; ptr=vptr->end();
             }
-            if (ptr == ownr.ibegin) throw BadIndex(-1, ownr._size);
+            if (ptr == ownr.cbegin) throw BadIndex(-1, ownr._size);
             ptr--; return iter;
         }
         const_iterator& operator--(int) {
-            while (ptr != ownr.ibegin && ptr == vptr->begin()) {
+            while (ptr != ownr.cbegin && ptr == vptr->begin()) {
                 vptr--; ptr=vptr->end();
             }
-            if (ptr == ownr.ibegin) throw BadIndex(-1, ownr._size);
+            if (ptr == ownr.cbegin) throw BadIndex(-1, ownr._size);
             ptr--; return *this;
         }
         bool operator==(const const_iterator& other) const {
@@ -184,7 +202,9 @@ protected:
     const_iterator cend;
 public:
     const_iterator begin() const {return cbegin;}
-
+    const_iterator end() const {return cend;}
+    iterator begin() {return ibegin();}
+    iterator end() {return iend;}
     int64_t size() const { return _size; }
     int64_t bucket_capacity() const { return _capacity; }
     bool empty() const { return _size == 0; }
@@ -193,10 +213,13 @@ public:
         int64_t cap = 1; while (cap < bucket_cap) cap <<= 1;
         _capacity = cap;
         buckets = vector<vector<T>>(cap);
-        begin = (iend = buckets.begin());
+        ibegin = iterator{buckets.front().begin(), buckets.front(), *this};
+        cbegin = const_iterator{buckets.front().begin(), buckets.front(), *this};
     }
-    set(set const& other):  _size(other.size),_capacity(other._capacity), buckets(other.buckets) {}
-    set(set&& other) noexcept : _size{other._size}, _capacity{other._capacity}, buckets{move(other.buckets)} {
+    set(set const& other):  _size(other.size),_capacity(other._capacity), buckets(other.buckets),
+        ibegin(other.ibegin), iend(other.iend), cbegin(other.cbegin), cend(other.cend) {}
+    set(set&& other) noexcept : _size{other._size}, _capacity{other._capacity}, buckets{move(other.buckets)},
+        ibegin(other.ibegin), iend(other.iend), cbegin(other.cbegin), cend(other.cend) {
         other._size = 0;
     }
     set& operator = (set const& other) {
@@ -204,6 +227,10 @@ public:
         buckets = other.buckets;
         _capacity = other._capacity;
         _size = other._size;
+        ibegin = other.ibegin;
+        iend = other.iend;
+        cbegin = other.cbegin;
+        cend = other.cend;
         return *this;
     }
     set& operator = (set&& other) noexcept {
@@ -211,6 +238,10 @@ public:
         buckets = move(other.buckets);
         _capacity = other._capacity;
         _size = other._size;
+        ibegin = other.ibegin;
+        iend = other.iend;
+        cbegin = other.cbegin;
+        cend = other.cend;
         return *this;
     }
     iterator find(T const& data) {
@@ -226,6 +257,7 @@ public:
         }
         return end();
     }
+    // НЕ ЗАБУДЬ НАПИСАТЬ ФАЙНДЫ ТАК ЧТОБЫ ЭТА ДРИСНЯ ХОТЯ БЫ СКОМПИЛИРОВАЛАСЬ
     const_iterator find(T const& data) const {
         int64_t hvals[set_traits<T>::lookup_hnum];
         set_traits<T>::lookup(data, hvals);
@@ -256,6 +288,21 @@ public:
         if (2*_size >= _capacity) {rehash(_capacity * 2); }
         int64_t hval = set_traits<T>::hash(data);
         buckets[hval%_capacity].push_back(data);
+        iterator iter = {buckets[hval%_capacity].end()-1, buckets[hval%_capacity], *this};
+        if ( _size == 0 ) {
+            ibegin = iter;
+            iend = iter;
+            cbegin = iter;
+            cend = iter;
+        }
+        else if (iter < ibegin) {
+            ibegin = iter;
+            cbegin = iter;
+        }
+        else if (iend < iter) {
+            iend = iter;
+            cend = iter;
+        }
         _size++;
         return true;
     }
@@ -264,9 +311,25 @@ public:
         if (2*_size >= _capacity) {rehash(_capacity * 2); }
         int64_t hval = set_traits<T>::hash(data);
         buckets[hval%_capacity].push_back(move(data));
+        iterator iter = {buckets[hval%_capacity].end()-1, buckets[hval%_capacity], *this};
+        if ( _size == 0 ) {
+            ibegin = iter;
+            iend = iter;
+            cbegin = iter;
+            cend = iter;
+        }
+        else if (iter < ibegin) {
+            ibegin = iter;
+            cbegin = iter;
+        }
+        else if (iend < iter) {
+            iend = iter;
+            cend = iter;
+        }
         _size++;
         return true;
     }
+    //НЕ ЗАБУДЬ НАПИСАТЬ ХУЙНЮ ЧТОБЫ ПРИ УДАЛЕНИИ ИТЕРАТОРЫ СДВИГАЛИСЬ
     bool remove(T const& data) {
         auto iter = find(data);
         if (iter != end()) {
