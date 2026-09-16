@@ -97,10 +97,10 @@ class set {
         }
     }
     public:
-    bool operator!=(const set<T>& other) const {
+    bool operator!=(const set& other) const {
         return buckets != other.buckets;
     }
-    bool operator==(const set<T>& other) const {
+    bool operator==(const set& other) const {
         return buckets == other.buckets;
     }
     class iterator {
@@ -179,6 +179,7 @@ class set {
             return *this;
         }
     public:
+        const_iterator(const iterator& other) noexcept : ptr(other.ptr), vptr(other.vptr), ownr(other.ownr){}
         const_iterator(const const_iterator& other) noexcept : ptr(other.ptr), vptr(other.vptr), ownr(other.ownr) {}
         const_iterator& operator=(const const_iterator& other) {
             if (ownr != other.ownr) throw BadIndex(ownr._size, ownr._size);
@@ -251,7 +252,7 @@ public:
 
     bool empty() const { return _size == 0; }
 
-    set(int64_t bucket_cap = 16): _size(0), _capacity(cap_count(bucket_cap)), buckets(bucket_cap),
+    set(int64_t bucket_cap = 16): _size(0), _capacity(cap_count(bucket_cap)), buckets(_capacity),
         ibegin(buckets.begin()->begin(), buckets.begin(), *this),
         iend(buckets.begin()->end(), buckets.begin(), *this),
         cbegin(buckets.begin()->begin(), buckets.begin(), *this),
