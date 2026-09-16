@@ -22,7 +22,7 @@ struct set_traits {
             hval ^= buf[i];
             hval *= 1099511628211ULL;
         }
-        return (int64_t)hval%INT64_MAX;
+        return (int64_t)(hval%INT64_MAX);
     }
     static int64_t lookup(const T& data, int64_t* out) {
         out[0] = hash(data);
@@ -45,7 +45,7 @@ struct set_traits<double> {
             hval ^= buf[i];
             hval *= 1099511628211ULL;
         }
-        return (int64_t)hval%INT64_MAX;
+        return (int64_t)(hval%INT64_MAX);
     }
     static int64_t lookup(const double& data, int64_t* out) {
         out[0] = hash(data-epsilon);
@@ -121,7 +121,7 @@ class set {
         }
         T& operator*() { return *ptr; }
         T* operator->() { return ptr; }
-        iterator operator++() {
+        iterator operator++(int) {
             if (!(*this < ownr.iend)) throw BadIndex(ownr._size, ownr._size);
             iterator iter = *this; ++ptr;
             while (ptr != ownr.iend.ptr && ptr == vptr->end()) {
@@ -129,7 +129,7 @@ class set {
             }
             return iter;
         }
-        iterator& operator++(int) {
+        iterator& operator++() {
             if (!(*this < ownr.iend)) throw BadIndex(ownr._size, ownr._size);
             ++ptr;
             while (ptr != ownr.iend.ptr && ptr == vptr->end()) {
@@ -137,7 +137,7 @@ class set {
             }
             return *this;
         }
-        iterator operator--() {
+        iterator operator--(int) {
             iterator iter = *this;
             if (ownr.iend < *this) throw BadIndex(ownr._size + (ptr - ownr.iend.ptr), ownr._size);
             while (ptr != ownr.ibegin.ptr && ptr == vptr->begin()) {
@@ -146,7 +146,7 @@ class set {
             if (ptr == ownr.ibegin.ptr) throw BadIndex(-1, ownr._size);
             ptr--; return iter;
         }
-        iterator& operator--(int) {
+        iterator& operator--() {
             if (ownr.iend < *this) throw BadIndex(ownr._size + (ptr - ownr.iend.ptr), ownr._size);
             while (ptr != ownr.ibegin.ptr && ptr == vptr->begin()) {
                 vptr--; ptr=vptr->end();
@@ -190,7 +190,7 @@ class set {
         }
         const T& operator*() const { return *ptr; }
         const T* operator->() const { return ptr; }
-        const_iterator operator++() {
+        const_iterator operator++(int) {
             if (!(*this < ownr.cend)) throw BadIndex(ownr._size, ownr._size);
             const_iterator iter = *this; ++ptr;
             while (ptr != ownr.cend.ptr && ptr == vptr->end()) {
@@ -198,7 +198,7 @@ class set {
             }
             return iter;
         }
-        const_iterator& operator++(int) {
+        const_iterator& operator++() {
             if (!(*this < ownr.cend)) throw BadIndex(ownr._size, ownr._size);
             ++ptr;
             while (ptr != ownr.cend.ptr && ptr == vptr->end()) {
@@ -206,8 +206,8 @@ class set {
             }
             return *this;
         }
-        const_iterator operator--() {
-            iterator iter = *this;
+        const_iterator operator--(int) {
+            const_iterator iter = *this;
             if (ownr.cend < *this) throw BadIndex(ownr._size + (ptr - ownr.cend.ptr), ownr._size);
             while (ptr != ownr.cbegin.ptr && ptr == vptr->begin()) {
                 vptr--; ptr=vptr->end();
@@ -215,7 +215,7 @@ class set {
             if (ptr == ownr.cbegin.ptr) throw BadIndex(-1, ownr._size);
             ptr--; return iter;
         }
-        const_iterator& operator--(int) {
+        const_iterator& operator--() {
             if (ownr.cend < *this) throw BadIndex(ownr._size + (ptr - ownr.cend.ptr), ownr._size);
             while (ptr != ownr.cbegin.ptr && ptr == vptr->begin()) {
                 vptr--; ptr=vptr->end();
@@ -420,6 +420,7 @@ public:
             cbegin = const_iterator{buckets.begin()->begin(), buckets.begin(), *this};
             cend = const_iterator{buckets.begin()->end(), buckets.begin(), *this};
             _size--;
+            return true;
         }
         if (iter != iend) {
             if (ibegin.vptr == iter.vptr) {
