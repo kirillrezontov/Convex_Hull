@@ -110,13 +110,13 @@ public:
     }
 
     T& operator[](int64_t i) {
-        if (i >= _size)
+        if (i >= _size || i < 0)
             throw BadIndex(i, _size);
         return _arr[i];
     }
 
     const T& operator[](int64_t i) const {
-        if (i >= _size)
+        if (i >= _size || i < 0)
             throw BadIndex(i, _size);
         return _arr[i];
     }

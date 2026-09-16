@@ -24,7 +24,7 @@ struct set_traits {
         }
         return (int64_t)hval%INT64_MAX;
     }
-    static int64_t lookup(const T& data, size_t* out) {
+    static int64_t lookup(const T& data, int64_t* out) {
         out[0] = hash(data);
         return 1;
     }
@@ -47,7 +47,7 @@ struct set_traits<double> {
         }
         return (int64_t)hval%INT64_MAX;
     }
-    static int64_t lookup(const double& data, size_t* out) {
+    static int64_t lookup(const double& data, int64_t* out) {
         out[0] = hash(data-epsilon);
         out[1] = hash(data);
         out[2] = hash(data+epsilon);
@@ -171,8 +171,8 @@ class set {
         friend class set;
     protected:
         vector<T>::const_iterator ptr; vector<vector<T>>::const_iterator vptr;
-        set& ownr;
-        const_iterator(const T* p, const vector<T>* vp, set& owner):ptr(p), vptr(vp), ownr(owner) {}
+        const set& ownr;
+        const_iterator(const T* p, const vector<T>* vp, const set& owner):ptr(p), vptr(vp), ownr(owner) {}
         const_iterator& operator=(const iterator& other) {
             if (ownr != other.ownr) throw BadIndex(ownr._size, ownr._size);
             ptr = other.ptr; vptr = other.vptr;
@@ -257,7 +257,7 @@ public:
         cbegin(buckets.begin()->begin(), buckets.begin(), *this),
         cend(buckets.begin()->end(), buckets.begin(), *this) {}
 
-    set(set const& other):  _size(other.size),_capacity(other._capacity), buckets(other.buckets),
+    set(set const& other):  _size(other._size),_capacity(other._capacity), buckets(other.buckets),
         ibegin(buckets.begin()->begin(), buckets.begin(), *this),
         iend(buckets.begin()->end(), buckets.begin(), *this),
         cbegin(buckets.begin()->begin(), buckets.begin(), *this),
@@ -363,9 +363,9 @@ public:
         int64_t hval = set_traits<T>::hash(data);
         buckets[hval%_capacity].push_back(data);
         iterator iter = {buckets[hval%_capacity].end()-1, &buckets[hval%_capacity], *this};
-        if ( _size == 0 ) {
+        if ( !_size ) {
             ibegin = iter;
-            iend = iter;
+            cbegin = iter;
             iend = {iter.ptr+1, iter.vptr, iter.ownr};
             cend = {iter.ptr+1, iter.vptr, iter.ownr};
         }
@@ -387,19 +387,19 @@ public:
         int64_t hval = set_traits<T>::hash(data);
         buckets[hval%_capacity].push_back(move(data));
         iterator iter = {buckets[hval%_capacity].end()-1, &buckets[hval%_capacity], *this};
-        if ( _size == 0 ) {
+        if ( !_size ) {
             ibegin = iter;
-            iend = iter;
-            iend = iterator{iter.ptr+1, iter.vptr, iter.ownr};
-            cend = const_iterator{iter.ptr+1, iter.vptr, iter.ownr};
+            cbegin = iter;
+            iend = {iter.ptr+1, iter.vptr, iter.ownr};
+            cend = {iter.ptr+1, iter.vptr, iter.ownr};
         }
         else if (iter < ibegin) {
             ibegin = iter;
             cbegin = iter;
         }
         else if (!(iter < iend)) {
-            iend = iterator{iter.ptr+1, iter.vptr, iter.ownr};
-            cend = const_iterator{iter.ptr+1, iter.vptr, iter.ownr};
+            iend = {iter.ptr+1, iter.vptr, iter.ownr};
+            cend = {iter.ptr+1, iter.vptr, iter.ownr};
         }
         _size++;
         return true;
@@ -411,8 +411,8 @@ public:
             if (ibegin.vptr == iter.vptr) {
                 if (iter.vptr->size() == 1) {
                     do {
-                        ibegin->vptr++;
-                        cbegin->vptr++;
+                        ibegin.vptr++;
+                        cbegin.vptr++;
                     }while (cbegin.vptr->empty());
                     ibegin.ptr = ibegin.vptr->begin();
                     cbegin.ptr = cbegin.vptr->begin();
@@ -421,8 +421,8 @@ public:
             if (iter.vptr == iend.vptr) {
                 if (iter.vptr->size() == 1) {
                     do {
-                        iend->vptr--;
-                        cend->vptr--;
+                        iend.vptr--;
+                        cend.vptr--;
                     }while (cend.vptr->empty());
                     iend.ptr = iend.vptr->end();
                     cend.ptr = cend.vptr->end();
