@@ -290,6 +290,12 @@ public:
         buckets = other.buckets;
         _capacity = other._capacity;
         _size = other._size;
+        if (_size == 0) {
+            ibegin = iterator{buckets.begin()->begin(), buckets.begin(), *this};
+            iend = iterator{buckets.begin()->end(), buckets.begin(), *this};
+            cbegin = const_iterator{buckets.begin()->begin(), buckets.begin(), *this};
+            cend = const_iterator{buckets.begin()->end(), buckets.begin(), *this};
+        }
         for (int64_t i = 0; i < _capacity; i++) {
             if (buckets[i].size()) {
                 ibegin = iterator{buckets[i].begin(), &buckets[i], *this};
@@ -312,8 +318,8 @@ public:
         buckets = move(other.buckets);
         _capacity = other._capacity;
         _size = other._size;
-        ibegin={other.ibegin.ptr, other.ibegin.vptr, *this}; iend={other.iend.ptr, other.iend.vptr, *this};
-        cbegin={other.cbegin.ptr, other.cbegin.vptr, *this}; cend={other.iend.ptr, other.iend.vptr, *this};
+        ibegin=iterator{other.ibegin.ptr, other.ibegin.vptr, *this}; iend=iterator{other.iend.ptr, other.iend.vptr, *this};
+        cbegin=const_iterator{other.cbegin.ptr, other.cbegin.vptr, *this}; cend=const_iterator{other.iend.ptr, other.iend.vptr, *this};
         other._size = 0;
         return *this;
     }
@@ -366,16 +372,16 @@ public:
         if ( !_size ) {
             ibegin = iter;
             cbegin = iter;
-            iend = {iter.ptr+1, iter.vptr, iter.ownr};
-            cend = {iter.ptr+1, iter.vptr, iter.ownr};
+            iend = iterator{iter.ptr+1, iter.vptr, iter.ownr};
+            cend = const_iterator{iter.ptr+1, iter.vptr, iter.ownr};
         }
         else if (iter < ibegin) {
             ibegin = iter;
             cbegin = iter;
         }
         else if (!(iter < iend)) {
-            iend = {iter.ptr+1, iter.vptr, iter.ownr};
-            cend = {iter.ptr+1, iter.vptr, iter.ownr};
+            iend = iterator{iter.ptr+1, iter.vptr, iter.ownr};
+            cend = const_iterator{iter.ptr+1, iter.vptr, iter.ownr};
         }
         _size++;
         return true;
@@ -390,16 +396,16 @@ public:
         if ( !_size ) {
             ibegin = iter;
             cbegin = iter;
-            iend = {iter.ptr+1, iter.vptr, iter.ownr};
-            cend = {iter.ptr+1, iter.vptr, iter.ownr};
+            iend = iterator{iter.ptr+1, iter.vptr, iter.ownr};
+            cend = const_iterator{iter.ptr+1, iter.vptr, iter.ownr};
         }
         else if (iter < ibegin) {
             ibegin = iter;
             cbegin = iter;
         }
         else if (!(iter < iend)) {
-            iend = {iter.ptr+1, iter.vptr, iter.ownr};
-            cend = {iter.ptr+1, iter.vptr, iter.ownr};
+            iend = iterator{iter.ptr+1, iter.vptr, iter.ownr};
+            cend = const_iterator{iter.ptr+1, iter.vptr, iter.ownr};
         }
         _size++;
         return true;
@@ -407,6 +413,14 @@ public:
 
     bool remove(T const& data) {
         auto iter = find(data);
+        if (_size == 1) {
+            iter.vptr->remove(iter.ptr);
+            ibegin = iterator{buckets.begin()->begin(), buckets.begin(), *this};
+            iend = iterator{buckets.begin()->end(), buckets.begin(), *this};
+            cbegin = const_iterator{buckets.begin()->begin(), buckets.begin(), *this};
+            cend = const_iterator{buckets.begin()->end(), buckets.begin(), *this};
+            _size--;
+        }
         if (iter != iend) {
             if (ibegin.vptr == iter.vptr) {
                 if (iter.vptr->size() == 1) {
@@ -426,6 +440,9 @@ public:
                     }while (cend.vptr->empty());
                     iend.ptr = iend.vptr->end();
                     cend.ptr = cend.vptr->end();
+                }
+                else {
+                    cend.ptr--; iend.ptr--;
                 }
             }
             iter.vptr->remove(iter.ptr);
