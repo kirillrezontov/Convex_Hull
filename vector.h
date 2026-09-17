@@ -5,27 +5,30 @@
 #include <cstring>
 #include <iostream>
 
-
-class BadAlloc {
+class BadCase {
+public:
+    virtual void what() const = 0;
+};
+class BadAlloc: public BadCase {
     const int64_t size;
     const char* _func;
     public:
     BadAlloc(int64_t size, const char* func):size(size), _func(func) {}
-    void what() const { std::cerr << "BadAlloc: " << size << ' ' << _func << std::endl; }
+    void what() const override { std::cerr << "BadAlloc: " << size << ' ' << _func << std::endl; }
 };
-class BadIndex {
+class BadIndex: public BadCase {
     const int64_t _i;
     const int64_t _size;
     public:
     BadIndex(int64_t i, int64_t size) : _i(i), _size(size){}
-    void what() const { std::cerr << "BadIndex: "<< _i << ' ' << _size << std::endl; }
+    void what() const override { std::cerr << "BadIndex: "<< _i << ' ' << _size << std::endl; }
 };
-class BadFile {
+class BadFile: BadCase {
     const char* _filename;
     const char* _func;
     public:
     BadFile(const char* filename, const char* func):_filename(filename), _func(func) {}
-    void what() const { std::cerr << "BadFile: " << _filename << ' ' << _func << std::endl; }
+    void what() const override { std::cerr << "BadFile: " << _filename << ' ' << _func << std::endl; }
 };
 
 template <typename T> struct remove_reference {using type = T;};

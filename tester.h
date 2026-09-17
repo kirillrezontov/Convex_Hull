@@ -50,14 +50,16 @@ class Tester {
         test(int n, double radius, double distribution);
         test(int n);
         test(test&& other) noexcept;
+        test(const char* filename);
         void FillFile(const char* filename) const;
         result check(Solution& solution) const;
     };
     vector<test> tests;
     vector<result> optimal_results, naive_results;
 public:
-    Tester(int n, int m, double radius = 10, double distribution = 0);
+    Tester(int n, int m, double radius, double distribution);
     Tester();
+    Tester(int start, int end);
     void RunTests();
     void PrintResults(const char* filename) const;
     void PrintResults() const;

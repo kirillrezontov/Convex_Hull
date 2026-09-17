@@ -27,6 +27,7 @@ Tester::Tester() {
 
 Tester::Tester(int n, int m, double radius, double distribution) {
     if (n<=0 || m <= 2) return;
+    tests.reserve(n);
     for (int i = 0; i < n; ++i) {
         std::cout << "\rGenerating tests " << 100*i/n << "%...";
         std::cout.flush();
@@ -41,7 +42,7 @@ void Tester::RunTests(){
     int passed = 0;
     std::ifstream tc(tcount);
     if (!tc.is_open()) throw BadFile(tcount, __func__);
-    size_t test_count = 0;
+    int64_t test_count = 0;
     tc >> test_count;
     tc.close();
     for (const auto &test : tests) {
@@ -125,9 +126,9 @@ result Tester::test::check(Solution& solution) const {
     auto end = std::chrono::steady_clock::now();
     res.time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
     auto hull=solution.GetHull();
-    size_t h = hull.size();
+    int64_t h = hull.size();
     if (h < 3 && points.size() >= 3) { return res; }
-    for (size_t i = 0; i < h; ++i) {
+    for (int64_t i = 0; i < h; ++i) {
         point a = hull[i], b = hull[(i+1)%h], c = hull[(i+2)%h];
         if (vector_product(vec(a,b), vec(b,c)) < -point::epsilon) {
             return res;
@@ -156,3 +157,29 @@ void Tester::test::FillFile(const char* filename) const {
     ofs.close();
 }
 
+Tester::Tester(int start, int end) {
+    if (start == end) { throw BadIndex(start, end); }
+    std::ifstream tc(tcount);
+    if (!tc.is_open()) throw BadFile(tcount, __func__);
+    int64_t test_count = 0;
+    tc >> test_count;
+    tc.close();
+    if (test_count < end) { throw BadIndex(test_count, end); }
+    tests.reserve(end-start);
+    for (int i = start; i < end; ++i) {
+        string test_name = tfile + to_string(i)+".txt";
+        std::cout << "\rReading tests " << 100*(i-start)/(end-start) << "%...";
+        std::cout.flush();
+        tests.push_back(test(test_name.c_str()));
+    }
+    std::cout << "\rReading tests 100%..."<<std::endl;
+}
+
+Tester::test::test(const char *filename) {
+    std::ifstream tc(filename);
+    if (!tc.is_open()) throw BadFile(filename, __func__);
+    point p{0,0};
+    while (tc >> p.x >> p.y) {
+        points.insert(p);
+    }
+}
