@@ -8,6 +8,7 @@
 class BadCase {
 public:
     virtual void what() const = 0;
+    virtual ~BadCase() = 0;
 };
 class BadAlloc: public BadCase {
     const int64_t size;
@@ -23,7 +24,7 @@ class BadIndex: public BadCase {
     BadIndex(int64_t i, int64_t size) : _i(i), _size(size){}
     void what() const override { std::cerr << "BadIndex: "<< _i << ' ' << _size << std::endl; }
 };
-class BadFile: BadCase {
+class BadFile: public BadCase{
     const char* _filename;
     const char* _func;
     public:

@@ -13,7 +13,7 @@
 #define tfile "test/test_"
 #define tcount "test/test_count.txt"
 
-Tester::Tester() {
+Tester::Tester(): rerun(false), start(0), end(0) {
     using namespace std;
     cout << "Number of tests: ";
     int n; cin >> n;
@@ -25,7 +25,7 @@ Tester::Tester() {
     }
 }
 
-Tester::Tester(int n, int m, double radius, double distribution) {
+Tester::Tester(int n, int m, double radius, double distribution): rerun(false), start(0), end(0) {
     if (n<=0 || m <= 2) return;
     tests.reserve(n);
     for (int i = 0; i < n; ++i) {
@@ -38,6 +38,9 @@ Tester::Tester(int n, int m, double radius, double distribution) {
 }
 
 void Tester::RunTests(){
+    if (rerun) {
+
+    }
     if (tests.empty()) return;
     int passed = 0;
     std::ifstream tc(tcount);
@@ -157,7 +160,7 @@ void Tester::test::FillFile(const char* filename) const {
     ofs.close();
 }
 
-Tester::Tester(int start, int end) {
+Tester::Tester(int start, int end): rerun(true) {
     if (start == end) { throw BadIndex(start, end); }
     std::ifstream tc(tcount);
     if (!tc.is_open()) throw BadFile(tcount, __func__);
@@ -172,6 +175,7 @@ Tester::Tester(int start, int end) {
         std::cout.flush();
         tests.push_back(test(test_name.c_str()));
     }
+    this->start = start; this->end = end;
     std::cout << "\rReading tests 100%..."<<std::endl;
 }
 

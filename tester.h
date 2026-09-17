@@ -41,6 +41,8 @@ struct set_traits<point> {
 };
 
 class Tester {
+    bool rerun;
+    int start, end;
     class test {
     protected:
         friend class vector<test>;
