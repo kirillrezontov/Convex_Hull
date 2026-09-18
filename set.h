@@ -71,13 +71,13 @@ class set {
 
     void rehash(int64_t new_cap) {
         if (new_cap <= _capacity) { return; }
-        auto old = move(buckets);
+        auto old = ::move(buckets);
         int64_t cap = cap_count(new_cap);
         buckets = vector<vector<T>>(cap);
         for (int64_t i = 0; i < old.size(); ++i) {
             for (auto& e : old[i]) {
                 int64_t h = set_traits<T>::hash(e);
-                buckets[h%cap].push_back(move(e));
+                buckets[h%cap].push_back(::move(e));
             }
         }
         _capacity = new_cap;
@@ -279,7 +279,7 @@ public:
             }
         }
     }
-    set(set&& other) noexcept : _size{other._size}, _capacity{other._capacity}, buckets{move(other.buckets)},
+    set(set&& other) noexcept : _size{other._size}, _capacity{other._capacity}, buckets{::move(other.buckets)},
         ibegin{other.ibegin.ptr, other.ibegin.vptr, *this}, iend{other.iend.ptr, other.iend.vptr, *this},
         cbegin{other.cbegin.ptr, other.cbegin.vptr, *this}, cend{other.iend.ptr, other.iend.vptr, *this}
     {
@@ -316,7 +316,7 @@ public:
 
     set& operator = (set&& other) noexcept {
         if (this == &other) { return *this; }
-        buckets = move(other.buckets);
+        buckets = ::move(other.buckets);
         _capacity = other._capacity;
         _size = other._size;
         ibegin=iterator{other.ibegin.ptr, other.ibegin.vptr, *this}; iend=iterator{other.iend.ptr, other.iend.vptr, *this};
@@ -392,7 +392,7 @@ public:
         if (contains(data)) { return false; }
         if (2*_size >= _capacity) {rehash(_capacity * 2); }
         int64_t hval = set_traits<T>::hash(data);
-        buckets[hval%_capacity].push_back(move(data));
+        buckets[hval%_capacity].push_back(::move(data));
         iterator iter = {buckets[hval%_capacity].end()-1, &buckets[hval%_capacity], *this};
         if ( !_size ) {
             ibegin = iter;

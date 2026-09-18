@@ -58,6 +58,7 @@ class Tester {
     };
     vector<test> tests;
     vector<result> optimal_results, naive_results;
+    void WriteFiles();
 public:
     Tester(int n, int m, double radius, double distribution);
     Tester();

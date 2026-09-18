@@ -96,7 +96,7 @@ public:
         T* tmp = (T*)malloc(new_capacity * sizeof(T));
         if (!tmp) throw BadAlloc(capacity, __func__);
         for (int64_t i=0; i<_size; i++) {
-            new(tmp+i) T(move(_arr[i]));
+            new(tmp+i) T(::move(_arr[i]));
             _arr[i].~T();
         }
         free(_arr);
@@ -140,7 +140,7 @@ public:
 
     void push_back(T&& x) {
         if (_size == _capacity) { reserve((_capacity)?_capacity*2:8); }
-        new (_arr+_size) T(move(x));
+        new (_arr+_size) T(::move(x));
         _size++;
     }
 
@@ -153,14 +153,14 @@ public:
     void remove(iterator& pos) {
         if (pos >= _arr+_size || pos < _arr) return;
         pos->~T();
-        for (iterator i = pos; i < _arr+_size-1; ++i) {*i = move(*(i+1));}
+        for (iterator i = pos; i < _arr+_size-1; ++i) {*i = ::move(*(i+1));}
         _size--;
     }
 
     void remove(int64_t pos) {
         if (pos >= _size || pos < 0) return;
         _arr[pos].~T();
-        for (iterator i = _arr+pos; i < _arr+_size-1; ++i) {*i = move(*(i+1));}
+        for (iterator i = _arr+pos; i < _arr+_size-1; ++i) {*i = ::move(*(i+1));}
         _size--;
     }
 
@@ -210,7 +210,7 @@ public:
         strcpy(_arr, str);
     }
     string(const string& str) = default;
-    string(string&& str) noexcept :vector<char>(move(str)) {}
+    string(string&& str) noexcept :vector<char>(::move(str)) {}
     string():vector<char>(1) {
         _arr[0]='\0';
     }

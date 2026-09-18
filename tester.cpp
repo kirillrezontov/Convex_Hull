@@ -13,6 +13,8 @@
 #define tfile "test/test_"
 #define tcount "test/test_count.txt"
 
+static const u_int thread_count = std::thread::hardware_concurrency();
+
 Tester::Tester(): rerun(false), start(0), end(0) {
     using namespace std;
     cout << "Number of tests: ";
@@ -22,6 +24,19 @@ Tester::Tester(): rerun(false), start(0), end(0) {
         int m; cin >> m;
         if (m<=0) continue;
         tests.push_back(test(m));
+    }
+}
+
+void Tester::WriteFiles() {
+    std::ifstream tc(tcount);
+    if (!tc.is_open()) throw BadFile(tcount, __func__);
+    int64_t test_count = 0, new_tests = tests.size();
+    tc >> test_count;
+    tc.close();
+    vector<std::jthread> threads;
+    threads.reserve(thread_count);
+    for (int64_t i = 0; i < new_tests/thread_count; ++i) {
+        
     }
 }
 
@@ -38,16 +53,13 @@ Tester::Tester(int n, int m, double radius, double distribution): rerun(false), 
 }
 
 void Tester::RunTests(){
+    if (tests.empty()) return;
     if (rerun) {
 
     }
     if (tests.empty()) return;
     int passed = 0;
-    std::ifstream tc(tcount);
-    if (!tc.is_open()) throw BadFile(tcount, __func__);
-    int64_t test_count = 0;
-    tc >> test_count;
-    tc.close();
+
     for (const auto &test : tests) {
         string test_name = tfile + to_string(test_count)+".txt";
         std::cout << "\rRunning tests " << 100*passed/tests.size() << "%...";
@@ -105,7 +117,7 @@ void Tester::PrintResults(const char* filename) const {
     cout << std::endl;
 }
 
-Tester::test::test(test&& other) noexcept : points(move(other.points)) {}
+Tester::test::test(test&& other) noexcept : points(::move(other.points)) {}
 
 Tester::test::test(int n) {
     for (int i = 0; i < n; ++i) {
