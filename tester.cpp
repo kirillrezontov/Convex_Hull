@@ -5,17 +5,16 @@
 #include "tester.h"
 
 #include <cmath>
-#include <iostream>
 #include <fstream>
-#include <iomanip>
 #include <thread>
 #define PI 3.14159265359
 #define tfile "test/test_"
 #define tcount "test/test_count.txt"
 
-static const u_int thread_count = std::thread::hardware_concurrency();
+static const int thread_count = std::thread::hardware_concurrency();
+static mct::vector<std::jthread> threads;
 
-Tester::Tester(): rerun(false), start(0), end(0) {
+tester::tester() {
     using namespace std;
     cout << "Number of tests: ";
     int n; cin >> n;
@@ -27,46 +26,38 @@ Tester::Tester(): rerun(false), start(0), end(0) {
     }
 }
 
-void Tester::WriteFiles() {
-    std::ifstream tc(tcount);
-    if (!tc.is_open()) throw BadFile(tcount, __func__);
-    int64_t test_count = 0, new_tests = tests.size();
-    tc >> test_count;
-    tc.close();
-    vector<std::jthread> threads;
-    threads.reserve(thread_count);
-    for (int64_t i = 0; i < new_tests/thread_count; ++i) {
-        
-    }
-}
-
-Tester::Tester(int n, int m, double radius, double distribution): rerun(false), start(0), end(0) {
+tester::tester(int n, int m, double radius, double distribution):tests(n) {
     if (n<=0 || m <= 2) return;
-    tests.reserve(n);
-    for (int i = 0; i < n; ++i) {
-        std::cout << "\rGenerating tests " << 100*i/n << "%...";
-        std::cout.flush();
-        tests.push_back(test(m, radius, distribution));
+    auto func = [](test* t, const int n, const double radius, const double distribution) ->void {
+        *t = mct::move(test(n, radius, distribution));
+    };
+    int cycles = n/thread_count, passed = 0;
+    for (int i = 0; i < cycles; ++i) {
+        for (int j = 0; j < thread_count; ++j) {
+            threads.emplace_back(func, &tests[i*thread_count+j], radius, distribution);
+            ++passed;
+        }
+        std::cout << "\rGenerating tests " << 100*passed/n << "%...";
     }
     std::cout << "\rGenerating tests 100%\n";
     std::cout.flush();
 }
 
-void Tester::RunTests(){
-    if (tests.empty()) return;
-    if (rerun) {
-
-    }
+void tester::RunTests(){
     if (tests.empty()) return;
     int passed = 0;
-
+    std::ifstream tc(tcount);
+    if (!tc.is_open()) throw mct::bad_file(tcount, __func__);
+    int64_t test_count = 0;
+    tc >> test_count;
+    tc.close();
     for (const auto &test : tests) {
-        string test_name = tfile + to_string(test_count)+".txt";
+        mct::string test_name = tfile + mct::to_string(test_count)+".txt";
         std::cout << "\rRunning tests " << 100*passed/tests.size() << "%...";
         std::cout.flush();
         test.FillFile(test_name.c_str()); test_count++;
         std::ofstream tcr(tcount);
-        if (!tcr.is_open()) throw BadFile(tcount, __func__);
+        if (!tcr.is_open()) throw mct::bad_file(tcount, __func__);
         tcr << test_count; tcr.close();
         OptimalSolution Os(test_name.c_str());
         NaiveSolution Ns(test_name.c_str());
@@ -78,7 +69,7 @@ void Tester::RunTests(){
     std::cout.flush();
 }
 
-void Tester::PrintResults() const {
+void tester::PrintResults() const {
     using namespace std;
     cout << "Optimal solution results: \t";
     size_t ot=0,nt=0,os=0,ns=0;
@@ -97,9 +88,9 @@ void Tester::PrintResults() const {
     cout << endl;
 }
 
-void Tester::PrintResults(const char* filename) const {
+void tester::PrintResults(const char* filename) const {
     std::ofstream cout(filename);
-    if (!cout.is_open()) throw BadFile(filename, __func__);
+    if (!cout.is_open()) throw mct::bad_file(filename, __func__);
     cout << "Optimal solution results: \t";
     size_t ot=0,nt=0,os=0,ns=0;
     for (int i = 0; i < optimal_results.size(); ++i) {
@@ -117,16 +108,16 @@ void Tester::PrintResults(const char* filename) const {
     cout << std::endl;
 }
 
-Tester::test::test(test&& other) noexcept : points(::move(other.points)) {}
+tester::test::test(test&& other) noexcept : points(move(other.points)) {}
 
-Tester::test::test(int n) {
+tester::test::test(int n) {
     for (int i = 0; i < n; ++i) {
         double x, y; std::cin >> x >> y;
         points.insert(point{x,y});
     }
 }
 
-Tester::test::test(int n, double radius, double distribution) {
+tester::test::test(int n, double radius, double distribution) {
     for (int i = 0; i < n; ++i) {
         double r = radius*pow(1.*rand()/RAND_MAX, distribution);
         double angle = double(rand()) / RAND_MAX * 2 * PI;
@@ -134,16 +125,16 @@ Tester::test::test(int n, double radius, double distribution) {
     }
 }
 
-result Tester::test::check(Solution& solution) const {
+result tester::test::check(Solution& solution) const {
     result res {0,false};
     auto start = std::chrono::steady_clock::now();
     solution.Solve();
     auto end = std::chrono::steady_clock::now();
     res.time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
     auto hull=solution.GetHull();
-    int64_t h = hull.size();
+    size_t h = hull.size();
     if (h < 3 && points.size() >= 3) { return res; }
-    for (int64_t i = 0; i < h; ++i) {
+    for (size_t i = 0; i < h; ++i) {
         point a = hull[i], b = hull[(i+1)%h], c = hull[(i+2)%h];
         if (vector_product(vec(a,b), vec(b,c)) < -point::epsilon) {
             return res;
@@ -162,9 +153,9 @@ result Tester::test::check(Solution& solution) const {
     return res;
 }
 
-void Tester::test::FillFile(const char* filename) const {
+void tester::test::FillFile(const char* filename) const {
     std::ofstream ofs(filename);
-    if (!ofs.is_open()) throw BadFile(filename, __func__);
+    if (!ofs.is_open()) throw mct::bad_file(filename, __func__);
     ofs << std::setprecision(17);
     for (const auto &p: points) {
         ofs << p.x << ' ' << p.y << std::endl;
@@ -172,30 +163,7 @@ void Tester::test::FillFile(const char* filename) const {
     ofs.close();
 }
 
-Tester::Tester(int start, int end): rerun(true) {
-    if (start == end) { throw BadIndex(start, end); }
-    std::ifstream tc(tcount);
-    if (!tc.is_open()) throw BadFile(tcount, __func__);
-    int64_t test_count = 0;
-    tc >> test_count;
-    tc.close();
-    if (test_count < end) { throw BadIndex(test_count, end); }
-    tests.reserve(end-start);
-    for (int i = start; i < end; ++i) {
-        string test_name = tfile + to_string(i)+".txt";
-        std::cout << "\rReading tests " << 100*(i-start)/(end-start) << "%...";
-        std::cout.flush();
-        tests.push_back(test(test_name.c_str()));
-    }
-    this->start = start; this->end = end;
-    std::cout << "\rReading tests 100%..."<<std::endl;
-}
-
-Tester::test::test(const char *filename) {
-    std::ifstream tc(filename);
-    if (!tc.is_open()) throw BadFile(filename, __func__);
-    point p{0,0};
-    while (tc >> p.x >> p.y) {
-        points.insert(p);
-    }
+tester::test& tester::test::operator= (test&& other) noexcept {
+    points = move(other.points);
+    return *this;
 }

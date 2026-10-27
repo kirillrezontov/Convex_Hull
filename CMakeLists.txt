@@ -11,6 +11,7 @@ add_executable(Convex_Hull
         algorythm.h
         tester.cpp
         tester.h
-        set.h
+        ptester.cpp
+        ptester.h
 )
 

@@ -2,7 +2,7 @@
 #include <fstream>
 #include "solution.h"
 #include "tester.h"
-#define out "output2.txt"
+#define out "output.txt"
 #define in "input.txt"
 #define out_naive "output_naive.txt"
 #define out_optimal "output_optimal.txt"
@@ -14,14 +14,13 @@ int main() {
     //     solution1.PrintResult("/home/kirillr/Convex_Hull/output_naive.txt");
     //     solution2.PrintResult("/home/kirillr/Convex_Hull/output_optimal.txt");
     //Visualiser visualiser;
-    //Tester tester(100, 100000, 1e9, 1);
-    //Tester tester;
-    //try{
-    Tester tester(0, 100);
-    tester.RunTests();
-    tester.PrintResults(out);
-    //} catch (const BadCase& e) {
+    // try{
+        tester tester(10, 100000, 1e9, 1);
+        //Tester tester;
+        tester.RunTests();
+        tester.PrintResults(out);
+    //} catch (const BadFile& e) {
     //     e.what();
-    //}
+    // }
     return 0;
 }
