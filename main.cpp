@@ -1,11 +1,11 @@
 #include <iostream>
 #include <fstream>
 #include "solution.h"
-#include "tester.h"
+#include "ptester.h"
 #define out "output.txt"
 #define in "input.txt"
-#define out_naive "output_naive.txt"
-#define out_optimal "output_optimal.txt"
+#define out_naive "output_naive.csv"
+#define out_optimal "output_optimal.csv"
 
 int main() {
     //     NaiveSolution solution1("/home/kirillr/Convex_Hull/input.txt");
@@ -15,10 +15,11 @@ int main() {
     //     solution2.PrintResult("/home/kirillr/Convex_Hull/output_optimal.txt");
     //Visualiser visualiser;
     // try{
-        tester tester(10, 100000, 1e9, 1);
+        ptester tester(100, 10, 100000, 1, 1e9);
         //Tester tester;
-        tester.RunTests();
-        tester.PrintResults(out);
+        tester.run_tests();
+        tester.write_naive_results(out_naive);
+        tester.write_optimal_results(out_optimal);
     //} catch (const BadFile& e) {
     //     e.what();
     // }

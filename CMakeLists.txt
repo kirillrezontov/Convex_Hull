@@ -5,12 +5,8 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_executable(Convex_Hull
         main.cpp
-        vector.h
         solution.cpp
         solution.h
-        algorythm.h
-        tester.cpp
-        tester.h
         ptester.cpp
         ptester.h
 )

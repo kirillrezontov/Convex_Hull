@@ -31,30 +31,35 @@ struct mct::less<point> {
     }
 };
 
-class Solution {
+class solution {
 protected:
     mct::vector<point> points;
     mct::vector<point> hull;
+    int64_t actions{};
 public:
-    explicit Solution(const char* filename);
-    virtual void Solve() = 0;
+    friend std::ostream& operator<<(std::ostream& os, const solution& s);
+    friend std::istream& operator>>(std::istream& is, solution& s);
+    explicit solution(const char* filename);
+    explicit solution();
+    virtual void solve() = 0;
 
-    void PrintResult(const char* filename) const;
-
-    [[nodiscard]] const mct::vector<point>& GetPoints() const;
-    [[nodiscard]] const mct::vector<point>& GetHull() const;
+    void print_result(const char* filename) const;
+    void print_result() const;
+    [[nodiscard]] const mct::vector<point>& get_points() const;
+    [[nodiscard]] const mct::vector<point>& get_hull() const;
+    [[nodiscard]] int64_t get_actions() const;
 };
 
-class NaiveSolution : public Solution {
+class naive_solution : public solution {
     public:
-    explicit NaiveSolution(const char* filename);
-    void Solve() override;
+    explicit naive_solution(const char* filename);
+    void solve() override;
 };
 
-class OptimalSolution : public Solution {
+class optimal_solution : public solution {
 public:
-    explicit OptimalSolution(const char* filename);
-    void Solve() override;
+    explicit optimal_solution(const char* filename);
+    void solve() override;
 };
 
 #endif

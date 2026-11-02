@@ -26,27 +26,48 @@ struct mct::unordered_set_traits<point> {
         int k = 0;
         for (int i = -1; i < 2; i++) {
             for (int j = -1; j < 2; j++) {
-                out[k++] = hash(x+point(i,j)*epsilon);
+                out[k++] = hash(x+(point(i,j)*epsilon));
             }
         }
     }
 };
 
+struct solution_result {
+    bool success;
+    int64_t test_number;
+    int64_t points_number;
+    int64_t work_time;
+    int64_t work_actions;
+    solution_result() : success(false), test_number(0), points_number(0), work_time(0), work_actions(0) {}
+    friend std::ostream& operator<<(std::ostream& os, const solution_result& t);
+};
+
 class ptest {
+    friend class ptester;
     mct::unordered_set<point> points;
     int64_t test_number;
     public:
     ptest() = delete;
     ptest(int64_t test_number);
     ptest(int64_t test_number, int64_t n, double d, double r);
-    ptest(const ptest&) = delete;
+    ptest(const ptest& other) = delete;
+    ptest(ptest&& other) noexcept;
     friend std::ostream& operator<<(std::ostream& os, const ptest& t);
     friend std::istream& operator>>(std::istream& is, ptest& t);
-    void fill_file(const char* c)
+    solution_result check(solution& s);
 };
 
 class ptester {
-
+    mct::vector<ptest> tests;
+    mct::vector<solution_result> naive_results;
+    mct::vector<solution_result> optimal_results;
+    public:
+    ptester();
+    ptester(int64_t test_number, int64_t n1, ino64_t n2, double d, double r);
+    ptester(const ptester&) = delete;
+    void run_tests();
+    void write_naive_results(const char* filename);
+    void write_optimal_results(const char* filename);
 };
 
 

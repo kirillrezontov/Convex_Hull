@@ -45,7 +45,7 @@ class tester {
         test(test&& other) noexcept;
         test& operator=(test&& other) noexcept;
         void FillFile(const char* filename) const;
-        result check(Solution& solution) const;
+        result check(solution& solution) const;
     };
     mct::vector<test> tests;
     mct::vector<result> optimal_results, naive_results;

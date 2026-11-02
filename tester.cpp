@@ -59,8 +59,8 @@ void tester::RunTests(){
         std::ofstream tcr(tcount);
         if (!tcr.is_open()) throw mct::bad_file(tcount, __func__);
         tcr << test_count; tcr.close();
-        OptimalSolution Os(test_name.c_str());
-        NaiveSolution Ns(test_name.c_str());
+        optimal_solution Os(test_name.c_str());
+        naive_solution Ns(test_name.c_str());
         optimal_results.push_back(test.check(Os));
         naive_results.push_back(test.check(Ns));
         passed++;
@@ -125,13 +125,13 @@ tester::test::test(int n, double radius, double distribution) {
     }
 }
 
-result tester::test::check(Solution& solution) const {
+result tester::test::check(solution& solution) const {
     result res {0,false};
     auto start = std::chrono::steady_clock::now();
-    solution.Solve();
+    solution.solve();
     auto end = std::chrono::steady_clock::now();
     res.time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-    auto hull=solution.GetHull();
+    auto hull=solution.get_hull();
     size_t h = hull.size();
     if (h < 3 && points.size() >= 3) { return res; }
     for (size_t i = 0; i < h; ++i) {
