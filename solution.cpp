@@ -6,60 +6,6 @@
 #include <fstream>
 #include <cfloat>
 
-inline bool point::operator==(const point & other) const {
-    return fabs(x-other.x) < epsilon && fabs(y - other.y) < epsilon;
-}
-inline bool point::operator!=(const point & other) const {
-    return fabs(x-other.x) > epsilon && fabs(y - other.y) > epsilon;
-}
-inline bool point::operator<(const point & other) const {
-    return x < other.x || (fabs(x-other.x) < epsilon && y < other.y);
-}
-inline bool point::operator>(const point & other) const {
-    return x > other.x || (fabs(x-other.x) < epsilon && y > other.y);
-}
-inline std::ostream& operator<<(std::ostream& os, const point& p) {
-    return os << "(" << p.x << "," << p.y << ")";
-}
-inline std::istream& operator>>(std::istream& is, point& p) {
-    return is >> p.x >> p.y;
-}
-inline point operator+(const point& a, const point& b) {
-    return point{a.x + b.x, a.y + b.y};
-}
-inline point operator-(const point& a, const point& b) {
-    return point{a.x - b.x, a.y - b.y};
-}
-inline double operator*(const point& a, const point& b) {
-    return a.x * b.x + a.y * b.y;
-}
-
-inline point operator*(const point &a, const double &b) {
-    return point{a.x*b, a.y*b};
-}
-
-inline point operator*(const double &a, const point &b) {
-    return point{a*b.x, a*b.y};
-}
-
-inline point operator/(const point &a, const double &b) {
-    return point{a.x/b, a.y/b};
-}
-
-inline double operator&(const point& a, const point& b) {
-    return a.x * b.y - a.y * b.x;
-}
-inline double sq_sc_prod(const point& a, const point& b) {
-    double s = a.x * b.x + a.y * b.y;
-    return s*s*(s>=0?1:-1);
-}
-inline double sq_mod(const point &a) {
-    return a.x * a.x + a.y * a.y;
-}
-inline point to_vec(const point& a, const point& b) {
-    return b - a;
-}
-
 std::ostream& operator<<(std::ostream& os, const solution& s) {
     os << s.hull.size() << '\n';
     for (const auto& i : s.hull) {
@@ -69,11 +15,10 @@ std::ostream& operator<<(std::ostream& os, const solution& s) {
 }
 
 std::istream& operator>>(std::istream& is, solution& s) {
-    point p = {0, 0};
     int64_t p_size; is >> p_size;
-    s.points.clear();s.points.resize(p_size);
-    for (auto& i : s.points) {
-        is >> i;
+    s.points.clear(); s.points.resize(p_size);
+    for (int64_t i = 0; i < p_size; ++i) {
+        is >> s.points[i];
     }
     return is;
 }
@@ -104,11 +49,11 @@ void solution::print_result() const {
     return actions;
 }
 
-[[nodiscard]] inline const mct::vector<point>& solution::get_points() const {
+[[nodiscard]] const mct::vector<point>& solution::get_points() const {
     return points;
 }
 
-[[nodiscard]] inline const mct::vector<point>& solution::get_hull() const {
+[[nodiscard]] const mct::vector<point>& solution::get_hull() const {
     return hull;
 }
 

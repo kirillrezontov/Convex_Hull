@@ -24,6 +24,61 @@ struct point {
     friend point to_vec(const point& a, const point& b);
 };
 
+
+inline bool point::operator==(const point & other) const {
+    return fabs(x-other.x) < epsilon && fabs(y - other.y) < epsilon;
+}
+inline bool point::operator!=(const point & other) const {
+    return fabs(x-other.x) > epsilon && fabs(y - other.y) > epsilon;
+}
+inline bool point::operator<(const point & other) const {
+    return x < other.x || (fabs(x-other.x) < epsilon && y < other.y);
+}
+inline bool point::operator>(const point & other) const {
+    return x > other.x || (fabs(x-other.x) < epsilon && y > other.y);
+}
+inline std::ostream& operator<<(std::ostream& os, const point& p) {
+    return os << "(" << p.x << "," << p.y << ")";
+}
+inline std::istream& operator>>(std::istream& is, point& p) {
+    return is >> p.x >> p.y;
+}
+inline point operator+(const point& a, const point& b) {
+    return point{a.x + b.x, a.y + b.y};
+}
+inline point operator-(const point& a, const point& b) {
+    return point{a.x - b.x, a.y - b.y};
+}
+inline double operator*(const point& a, const point& b) {
+    return a.x * b.x + a.y * b.y;
+}
+
+inline point operator*(const point &a, const double &b) {
+    return point{a.x*b, a.y*b};
+}
+
+inline point operator*(const double &a, const point &b) {
+    return point{a*b.x, a*b.y};
+}
+
+inline point operator/(const point &a, const double &b) {
+    return point{a.x/b, a.y/b};
+}
+
+inline double operator&(const point& a, const point& b) {
+    return a.x * b.y - a.y * b.x;
+}
+inline double sq_sc_prod(const point& a, const point& b) {
+    double s = a.x * b.x + a.y * b.y;
+    return s*s*(s>=0?1:-1);
+}
+inline double sq_mod(const point &a) {
+    return a.x * a.x + a.y * a.y;
+}
+inline point to_vec(const point& a, const point& b) {
+    return b - a;
+}
+
 template <>
 struct mct::less<point> {
     bool operator()(const point& a, const point& b) const {

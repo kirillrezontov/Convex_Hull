@@ -6,6 +6,7 @@
 
 #include <cmath>
 #include <fstream>
+#include <iomanip>
 #include <thread>
 #define PI 3.14159265359
 #define tfile "test/test_"

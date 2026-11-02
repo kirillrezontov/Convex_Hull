@@ -63,7 +63,7 @@ class ptester {
     mct::vector<solution_result> optimal_results;
     public:
     ptester();
-    ptester(int64_t test_number, int64_t n1, ino64_t n2, double d, double r);
+    ptester(int64_t test_number, int64_t n1, int64_t n2, double d, double r);
     ptester(const ptester&) = delete;
     void run_tests();
     void write_naive_results(const char* filename);

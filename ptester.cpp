@@ -4,28 +4,24 @@
 
 #include "ptester.h"
 #include <fstream>
+#include <iomanip>
 
 auto test_path = "test/test_";
 auto test_count = "test/test_count.txt";
-
-int int_rand(const int & min, const int & max) {
-    thread_local std::mt19937 generator;
-    std::uniform_int_distribution<int> distribution(min,max);
-    return distribution(generator);
-}
 
 constexpr int INT_MAX_2 = INT_MAX>>1;
 
 std::ostream& operator<<(std::ostream& os, const solution_result& s) {
     os << s.test_number << "; " << (s.success?"AC; ":"WA; ") << s.points_number << "; " << s.work_actions << "; " << s.work_time;
+    return os;
 }
 
 ptest::ptest(int64_t test_number) : test_number(test_number) {}
 
 ptest::ptest(int64_t test_number, int64_t n, double d, double r) : test_number(test_number) {
     while (points.size() < n) {
-        double rad = r*pow(1.0*int_rand(0, INT_MAX)/INT_MAX, d);
-        double angle = 1.0*int_rand(0, INT_MAX-1)/INT_MAX_2*M_PI;
+        double rad = r*pow(1.0*mct::thread_local_rand(0, INT_MAX)/INT_MAX, d);
+        double angle = 1.0*mct::thread_local_rand(0, INT_MAX-1)/INT_MAX_2*M_PI;
         points.insert(point(rad*cos(angle),rad*sin(angle)));
     }
 }
@@ -94,14 +90,14 @@ ptester::ptester() {
     }
 }
 
-ptester::ptester(int64_t test_number, int64_t n1, ino64_t n2, double d, double r) {
+ptester::ptester(int64_t test_number, int64_t n1, int64_t n2, double d, double r) : optimal_results(test_number), naive_results(test_number){
     std::ifstream ifs(test_count);
     if (!ifs.good()) throw mct::bad_file(test_count, __func__);
     int64_t t_num; ifs >> t_num; ifs.close(); tests.reserve(test_number);
     for (int64_t i = 0; i < test_number; ++i) {
-        tests.emplace_back(i+t_num, n1*((test_number-i)/test_number)+n2*(i/test_number), d, r);
+        tests.emplace_back(i+t_num, n1+i*(n2-n1)/(test_number-1), d, r);
         std::ofstream ofs((mct::string(test_path) + mct::to_string(i+t_num) + ".txt").c_str());
-        ofs << tests[i];
+        ofs << std::fixed << std::setprecision(17) << tests[i];
         ofs.close();
     }
     t_num+=test_number;
@@ -131,7 +127,6 @@ void ptester::run_tests() {
         auto path = mct::string(test_path) + mct::to_string(t->test_number) + ".txt";
         optimal_solution os(path.c_str());
         naive_solution ns(path.c_str());
-        os.solve(); ns.solve();
         *optimal_res = t->check(os);
         *naive_res = t->check(ns);
     };
