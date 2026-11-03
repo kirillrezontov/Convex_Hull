@@ -36,9 +36,10 @@ struct solution_result {
     bool success;
     int64_t test_number;
     int64_t points_number;
+    int64_t hull_number;
     int64_t work_time;
     int64_t work_actions;
-    solution_result() : success(false), test_number(0), points_number(0), work_time(0), work_actions(0) {}
+    solution_result() : success(false), test_number(0), points_number(0), hull_number(0), work_time(0), work_actions(0) {}
     friend std::ostream& operator<<(std::ostream& os, const solution_result& t);
 };
 
@@ -63,6 +64,7 @@ class ptester {
     mct::vector<solution_result> optimal_results;
     public:
     ptester();
+    ptester(int64_t test_start, int64_t test_end);
     ptester(int64_t test_number, int64_t n1, int64_t n2, double d, double r);
     ptester(const ptester&) = delete;
     void run_tests();

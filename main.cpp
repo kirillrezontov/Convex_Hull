@@ -15,7 +15,7 @@ int main() {
     //     solution2.PrintResult("/home/kirillr/Convex_Hull/output_optimal.txt");
     //Visualiser visualiser;
     // try{
-        ptester tester(100, 10, 100000, 1, 1e9);
+        ptester tester(12*std::thread::hardware_concurrency(), 1000, 1000000, 0.5, 1e5);
         //Tester tester;
         tester.run_tests();
         tester.write_naive_results(out_naive);

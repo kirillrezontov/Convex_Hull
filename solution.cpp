@@ -5,6 +5,7 @@
 #include "solution.h"
 #include <fstream>
 #include <cfloat>
+#include <iomanip>
 
 std::ostream& operator<<(std::ostream& os, const solution& s) {
     os << s.hull.size() << '\n';
@@ -35,14 +36,14 @@ solution::solution() {
 }
 
 void solution::print_result(const char* filename) const {
-    std::ofstream ofs(filename, std::ios::app);
+    std::ofstream ofs(filename);
     if (!ofs.good()) { throw mct::bad_file(filename, __func__); }
-    ofs << *this;
+    ofs << std::fixed << std::setprecision(17) << *this;
     ofs.close();
 }
 
 void solution::print_result() const {
-    std::cout << *this;
+    std::cout << std::fixed << std::setprecision(17) << *this;
 }
 
 [[nodiscard]] int64_t solution::get_actions() const {
@@ -99,7 +100,7 @@ void optimal_solution::solve() {
         }
         hull.push_back(psorted[i]); ++actions;
     }
-    for (int64_t i = points.size()-1; i >= 0; --i) {
+    for (int64_t i = points.size()-2; i >= 0; --i) {
         while (hull.size() > 1 && (to_vec(*(hull.end()-1), *(hull.end()-2)) &
             to_vec(*(hull.end()-1), psorted[i])) > 0) {
             hull.pop_back(); ++actions;

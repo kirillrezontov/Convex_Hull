@@ -6,13 +6,15 @@
 #include <fstream>
 #include <iomanip>
 
-auto test_path = "test/test_";
-auto test_count = "test/test_count.txt";
+static auto test_path = "test/test_";
+static auto test_count = "test/test_count.txt";
+static auto naive_path = "naive_hull/hull_";
+static auto optimal_path = "optimal_hull/hull_";
 
 constexpr int INT_MAX_2 = INT_MAX>>1;
 
 std::ostream& operator<<(std::ostream& os, const solution_result& s) {
-    os << s.test_number << "; " << (s.success?"AC; ":"WA; ") << s.points_number << "; " << s.work_actions << "; " << s.work_time;
+    os << s.test_number << ";" << (s.success?"AC;":"WA;") << s.points_number << ";" << s.hull_number <<";" << s.work_actions << ";" << s.work_time;
     return os;
 }
 
@@ -54,9 +56,10 @@ solution_result ptest::check(solution& s) {
     s.solve();
     auto end = std::chrono::steady_clock::now();
     mct::vector hull(s.get_hull());
-    result.work_time = std::chrono::duration_cast<std::chrono::seconds>(end-start).count();
+    result.work_time = std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
     result.work_actions = s.get_actions();
     result.points_number = points.size();
+    result.hull_number = hull.size();
     result.test_number = test_number;
     auto hull_size = hull.size();
     if (hull_size < 3 && points.size() >= 3) return result;
@@ -81,16 +84,30 @@ solution_result ptest::check(solution& s) {
 
 ptester::ptester() {
     int64_t t_size; std::cin >> t_size;
+    optimal_results.resize(t_size); naive_results.resize(t_size);
     for (int64_t i = 0; i < t_size; ++i) {
         int64_t t_number; std::cin >> t_number;
         tests.push_back(ptest(t_number));
         std::ifstream ifs((mct::string(test_path) + mct::to_string(t_number) + ".txt").c_str());
         ifs >> tests[i];
         ifs.close();
+        std::cout << "\rGenerating tests: " << (i+1)*100/(t_size) << "%" << std::flush;
     }
+    std::cout << std::endl;
 }
 
-ptester::ptester(int64_t test_number, int64_t n1, int64_t n2, double d, double r) : optimal_results(test_number), naive_results(test_number){
+ptester::ptester(int64_t test_start, int64_t test_end): naive_results(test_end-test_start), optimal_results(test_end-test_start) {
+    for (int64_t i = test_start; i < test_end; ++i) {
+        tests.push_back(ptest(i));
+        std::ifstream ifs((mct::string(test_path) + mct::to_string(i) + ".txt").c_str());
+        ifs >> tests[i];
+        ifs.close();
+        std::cout << "\rGenerating tests: " << (i-test_start+1)*100/(test_end-test_start) << "%" << std::flush;
+    }
+    std::cout << std::endl;
+}
+
+ptester::ptester(int64_t test_number, int64_t n1, int64_t n2, double d, double r) : naive_results(test_number), optimal_results(test_number){
     std::ifstream ifs(test_count);
     if (!ifs.good()) throw mct::bad_file(test_count, __func__);
     int64_t t_num; ifs >> t_num; ifs.close(); tests.reserve(test_number);
@@ -99,7 +116,9 @@ ptester::ptester(int64_t test_number, int64_t n1, int64_t n2, double d, double r
         std::ofstream ofs((mct::string(test_path) + mct::to_string(i+t_num) + ".txt").c_str());
         ofs << std::fixed << std::setprecision(17) << tests[i];
         ofs.close();
+        std::cout << "\rGenerating tests: " << (i+1)*100/test_number << "%" << std::flush;
     }
+    std::cout << std::endl;
     t_num+=test_number;
     std::ofstream ofs(test_count);
     ofs << t_num;
@@ -107,6 +126,7 @@ ptester::ptester(int64_t test_number, int64_t n1, int64_t n2, double d, double r
 
 void ptester::write_naive_results(const char *filename) {
     std::ofstream ofs(filename);
+    ofs << "test_id;success;points_number;hull_number;work_actions;work_time\n";
     for (const auto& r: naive_results) {
         ofs << r << '\n';
     }
@@ -115,12 +135,13 @@ void ptester::write_naive_results(const char *filename) {
 
 void ptester::write_optimal_results(const char *filename) {
     std::ofstream ofs(filename);
+    ofs << "test_id;success;points_number;hull_number;work_actions;work_time\n";
     for (const auto& r: optimal_results) {
         ofs << r << '\n';
     }
 }
 
-auto thread_count = mct::max(1u, std::thread::hardware_concurrency());
+static auto thread_count = mct::max(1u, std::thread::hardware_concurrency());
 
 void ptester::run_tests() {
     auto run_test = [](ptest* t, solution_result* optimal_res, solution_result* naive_res) {
@@ -128,12 +149,16 @@ void ptester::run_tests() {
         optimal_solution os(path.c_str());
         naive_solution ns(path.c_str());
         *optimal_res = t->check(os);
+        os.print_result((mct::string(optimal_path)+mct::to_string(t->test_number)+".txt").c_str());
         *naive_res = t->check(ns);
+        ns.print_result((mct::string(naive_path)+mct::to_string(t->test_number)+".txt").c_str());
     };
     for (int64_t i = 0; i < (tests.size()+thread_count-1)/thread_count; ++i) {
         mct::vector<std::jthread> threads;
         for (u_int j = 0; j < thread_count && i*thread_count + j < tests.size(); ++j) {
             threads.emplace_back(run_test, &tests[i*thread_count+j], &optimal_results[i*thread_count+j], &naive_results[i*thread_count+j]);
         }
+        std::cout << "\rRunning tests: " << mct::min((i+1)*thread_count, tests.size())*100/tests.size() << "%" << std::flush;
     }
+    std::cout << std::endl;
 }

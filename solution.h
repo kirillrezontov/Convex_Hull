@@ -38,10 +38,11 @@ inline bool point::operator>(const point & other) const {
     return x > other.x || (fabs(x-other.x) < epsilon && y > other.y);
 }
 inline std::ostream& operator<<(std::ostream& os, const point& p) {
-    return os << "(" << p.x << "," << p.y << ")";
+    return os << "(" << p.x << ", " << p.y << ")";
 }
 inline std::istream& operator>>(std::istream& is, point& p) {
-    return is >> p.x >> p.y;
+    char t; is >> t >> p.x >> t >> p.y >> t;
+    return is;
 }
 inline point operator+(const point& a, const point& b) {
     return point{a.x + b.x, a.y + b.y};
